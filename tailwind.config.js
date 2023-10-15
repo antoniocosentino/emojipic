@@ -2,9 +2,10 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    extend: {},
-    fontSize: {
-      emoji: "260px",
+    extend: {
+      fontSize: {
+        emoji: "260px",
+      },
     },
   },
   plugins: [],
