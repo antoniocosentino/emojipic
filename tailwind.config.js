@@ -5,6 +5,7 @@ module.exports = {
     extend: {
       fontSize: {
         emoji: "260px",
+        emojiSmall: "87px",
       },
     },
   },
