@@ -4,11 +4,9 @@ import "./App.css";
 import { exportComponentAsPNG } from "react-component-export-image";
 
 const getRandomEmoji = (): string => {
-  // Generate a random code point within the emoji range (U+1F600 - U+1F64F)
   const emojiCodePoint =
     Math.floor(Math.random() * (0x1f64f - 0x1f600 + 1)) + 0x1f600;
 
-  // Convert the code point to a JavaScript string
   const emoji = String.fromCodePoint(emojiCodePoint);
 
   return emoji;
@@ -58,9 +56,19 @@ function App() {
 
   const downloadRef = useRef(null) as MutableRefObject<null>;
 
+  const vw = Math.max(
+    document.documentElement.clientWidth || 0,
+    window.innerWidth || 0
+  );
+
+  const html2CanvasOptions = {
+    ...(vw < 1024 && { y: 364 }),
+  };
+
   const handleDownloadImage = async () => {
     exportComponentAsPNG(downloadRef, {
       fileName: "emojipic.png",
+      html2CanvasOptions,
     });
   };
 
