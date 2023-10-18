@@ -4,4 +4,8 @@ Emojipic is a simple online tool that allows you to generate a png file starting
 
 [Try it out!](https://antoniocosentino.github.io/emojipic/)
 
-Built with React + Tailwind CSS
+![emojipic](/public/screenshot.png)
+
+## Project info
+
+Built with React + Typescript + Tailwind CSS
