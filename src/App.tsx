@@ -85,7 +85,7 @@ function App() {
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
               size={1}
-              maxLength={1}
+              maxLength={2}
               className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
             />
 
@@ -118,7 +118,7 @@ function App() {
           <div>
             <div
               ref={downloadRef}
-              className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0"
+              className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto"
               style={{
                 backgroundColor: bgColor,
               }}
