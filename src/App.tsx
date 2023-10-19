@@ -75,41 +75,47 @@ function App() {
   return (
     <>
       <div className="shadow-lg mt-4 lg:mt-8 p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
-        <h1 className="text-4xl font-bold">Emoji to PNG</h1>
+        <h1 className="text-4xl font-bold">Emojipic</h1>
 
         <div className="flex justify-between mt-6 flex-col lg:flex-row">
           <div>
-            <label className="font-bold">Emoji:</label>
+            <label className="font-bold block">Emoji:</label>
             <input
               type="text"
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
               size={1}
               maxLength={2}
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
+              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
             />
 
             <button
-              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+              className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
               onClick={() => setEmoji(getRandomEmoji)}
             >
               Randomize emoji
             </button>
 
             <br />
-            <br />
 
-            <label className="font-bold">Background color:</label>
+            <label className="font-bold block">Background color:</label>
             <input
               type="text"
               value={bgColor}
               onChange={(e) => setBgColor(e.target.value)}
               size={1}
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
+              className="bg-gray-200 inline-block appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl align-bottom"
+            />
+
+            <input
+              type="color"
+              value={bgColor}
+              onChange={(e) => setBgColor(e.target.value)}
+              className="ml-2 h-12 w-12"
             />
 
             <button
-              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+              className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
               onClick={() => setBgColor(getRandomColor)}
             >
               Randomize color
@@ -118,7 +124,7 @@ function App() {
           <div>
             <div
               ref={downloadRef}
-              className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto"
+              className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none"
               style={{
                 backgroundColor: bgColor,
               }}
