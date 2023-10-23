@@ -1,4 +1,4 @@
-import { MutableRefObject, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 import { exportComponentAsPNG } from "react-component-export-image";
@@ -51,18 +51,13 @@ const getRandomColor = (): string => {
 
 function App() {
   const [bgColor, setBgColor] = useState(getRandomColor());
-
   const [emoji, setEmoji] = useState(getRandomEmoji());
+  const [canvasDistanceToTop, setCanvasDistanceToTop] = useState(0);
 
-  const downloadRef = useRef(null) as MutableRefObject<null>;
-
-  const vw = Math.max(
-    document.documentElement.clientWidth || 0,
-    window.innerWidth || 0
-  );
+  const downloadRef = useRef<HTMLDivElement>(null);
 
   const html2CanvasOptions = {
-    ...(vw < 1024 && { y: 364 }),
+    y: canvasDistanceToTop,
   };
 
   const handleDownloadImage = async () => {
@@ -71,6 +66,12 @@ function App() {
       html2CanvasOptions,
     });
   };
+
+  useEffect(() => {
+    const canvaselement = downloadRef.current;
+    const distanceToTop = canvaselement?.getBoundingClientRect().top ?? 0;
+    setCanvasDistanceToTop(distanceToTop);
+  }, []);
 
   return (
     <>
