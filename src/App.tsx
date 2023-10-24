@@ -57,12 +57,22 @@ const getRandomColor = (): string => {
   return COOL_COLORS[Math.floor(Math.random() * COOL_COLORS.length)];
 };
 
+const getViewport = (): number => {
+  return Math.max(
+    document.documentElement.clientWidth || 0,
+    window.innerWidth || 0
+  );
+};
+
 function App() {
   const [bgColor, setBgColor] = useState(getRandomColor());
   const [emoji, setEmoji] = useState(getRandomEmoji());
   const [canvasDistanceToTop, setCanvasDistanceToTop] = useState(0);
-  const [scrollAmount, setScrollAmount] = useState(0);
-  console.log("🍌: App -> scrollAmount", scrollAmount);
+  const [scrollAmount, setScrollAmount] = useState(window.scrollY);
+  const [viewPort, setViewport] = useState(getViewport());
+
+  const throttledScrollAmount = useThrottle(scrollAmount);
+  const throttledViewport = useThrottle(viewPort);
 
   const downloadRef = useRef<HTMLDivElement>(null);
 
@@ -77,20 +87,35 @@ function App() {
     });
   };
 
-  const calculateViewport = useThrottle(() => {
+  const updateDistanceToTop = () => {
     const canvaselement = downloadRef.current;
     const distanceToTop = canvaselement?.getBoundingClientRect().top ?? 0;
     setCanvasDistanceToTop(distanceToTop);
+  };
+
+  useEffect(() => {
+    updateDistanceToTop();
+  }, [throttledScrollAmount]);
+
+  useEffect(() => {
+    updateDistanceToTop();
+  }, [throttledViewport]);
+
+  useEffect(() => {
+    updateDistanceToTop();
+  }, []);
+
+  const resizeHandler = () => {
+    setViewport(getViewport());
+  };
+
+  const scrollHandler = () => {
     setScrollAmount(window.scrollY);
-  }, 500);
+  };
 
   useEffect(() => {
-    calculateViewport();
-  }, [calculateViewport]);
-
-  useEffect(() => {
-    window.addEventListener("resize", calculateViewport, false);
-    window.addEventListener("scroll", calculateViewport, false);
+    window.addEventListener("resize", resizeHandler, false);
+    window.addEventListener("scroll", scrollHandler, false);
   });
 
   return (
