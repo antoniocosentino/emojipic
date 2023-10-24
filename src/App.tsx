@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import ReactGA from "react-ga";
 import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
-
-if (TRACKING_ID) {
-  ReactGA.initialize(TRACKING_ID);
-  ReactGA.pageview(window.location.pathname + window.location.search);
-}
 
 const getRandomEmoji = (): string => {
   const emojiCodePoint =
@@ -119,7 +114,19 @@ function App() {
   });
 
   return (
-    <>
+    <HelmetProvider>
+      <Helmet>
+        <script
+          src={`https://www.googletagmanager.com/gtag/js?id=${TRACKING_ID}`}
+          async
+        ></script>
+        <script>
+          {`window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${TRACKING_ID}');`}
+        </script>
+      </Helmet>
       <div
         id="wrapper"
         className="shadow-lg mt-4 lg:mt-8 p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto"
@@ -227,7 +234,7 @@ function App() {
           Source Code
         </a>
       </div>
-    </>
+    </HelmetProvider>
   );
 }
 
