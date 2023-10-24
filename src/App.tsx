@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import ReactGA from "react-ga";
 import { exportComponentAsPNG } from "react-component-export-image";
+import useThrottle from "./hooks/useThrottle";
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
 
@@ -61,6 +62,7 @@ function App() {
   const [emoji, setEmoji] = useState(getRandomEmoji());
   const [canvasDistanceToTop, setCanvasDistanceToTop] = useState(0);
   const [scrollAmount, setScrollAmount] = useState(0);
+  console.log("🍌: App -> scrollAmount", scrollAmount);
 
   const downloadRef = useRef<HTMLDivElement>(null);
 
@@ -75,16 +77,16 @@ function App() {
     });
   };
 
-  const calculateViewport = () => {
+  const calculateViewport = useThrottle(() => {
     const canvaselement = downloadRef.current;
     const distanceToTop = canvaselement?.getBoundingClientRect().top ?? 0;
     setCanvasDistanceToTop(distanceToTop);
     setScrollAmount(window.scrollY);
-  };
+  }, 500);
 
   useEffect(() => {
     calculateViewport();
-  }, []);
+  }, [calculateViewport]);
 
   useEffect(() => {
     window.addEventListener("resize", calculateViewport, false);
