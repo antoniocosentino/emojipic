@@ -4,10 +4,10 @@ import ReactGA from "react-ga";
 import { exportComponentAsPNG } from "react-component-export-image";
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
-console.log("🍌: TRACKING_ID", TRACKING_ID);
 
 if (TRACKING_ID) {
   ReactGA.initialize(TRACKING_ID);
+  ReactGA.pageview(window.location.pathname + window.location.search);
 }
 
 const getRandomEmoji = (): string => {
