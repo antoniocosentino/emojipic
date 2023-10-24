@@ -60,11 +60,12 @@ function App() {
   const [bgColor, setBgColor] = useState(getRandomColor());
   const [emoji, setEmoji] = useState(getRandomEmoji());
   const [canvasDistanceToTop, setCanvasDistanceToTop] = useState(0);
+  const [scrollAmount, setScrollAmount] = useState(0);
 
   const downloadRef = useRef<HTMLDivElement>(null);
 
   const html2CanvasOptions = {
-    y: canvasDistanceToTop,
+    y: canvasDistanceToTop + scrollAmount,
   };
 
   const handleDownloadImage = async () => {
@@ -74,15 +75,28 @@ function App() {
     });
   };
 
-  useEffect(() => {
+  const calculateViewport = () => {
     const canvaselement = downloadRef.current;
     const distanceToTop = canvaselement?.getBoundingClientRect().top ?? 0;
     setCanvasDistanceToTop(distanceToTop);
+    setScrollAmount(window.scrollY);
+  };
+
+  useEffect(() => {
+    calculateViewport();
   }, []);
+
+  useEffect(() => {
+    window.addEventListener("resize", calculateViewport, false);
+    window.addEventListener("scroll", calculateViewport, false);
+  });
 
   return (
     <>
-      <div className="shadow-lg mt-4 lg:mt-8 p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
+      <div
+        id="wrapper"
+        className="shadow-lg mt-4 lg:mt-8 p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto"
+      >
         <h1 className="text-4xl font-bold">Emojipic</h1>
 
         <div className="flex justify-between mt-6 flex-col lg:flex-row">
