@@ -4,6 +4,8 @@ import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
+const packageJson = require("./../package.json");
+
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
 
 const getRandomEmoji = (): string => {
@@ -232,7 +234,8 @@ function App() {
           rel="noreferrer"
         >
           Source Code
-        </a>
+        </a>{" "}
+        · v.{packageJson.version}
       </div>
     </HelmetProvider>
   );
