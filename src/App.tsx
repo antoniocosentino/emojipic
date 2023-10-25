@@ -129,13 +129,10 @@ function App() {
           gtag('config', '${TRACKING_ID}');`}
         </script>
       </Helmet>
-      <div
-        id="wrapper"
-        className="shadow-lg mt-4 lg:mt-8 p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto"
-      >
-        <h1 className="text-4xl font-bold">Emojipic</h1>
+      <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
+        <h1 className="text-4xl font-bold hidden sm:block">Emojipic</h1>
 
-        <div className="flex justify-between mt-6 flex-col lg:flex-row">
+        <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
           <div>
             <label className="font-bold block">Emoji:</label>
             <input
