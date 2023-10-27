@@ -130,7 +130,9 @@ function App() {
         </script>
       </Helmet>
       <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
-        <h1 className="text-4xl font-bold hidden sm:block">Emojipic</h1>
+        <h1 id="appTitle" className="text-4xl font-bold mb-4">
+          Emojipic
+        </h1>
 
         <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
           <div>
@@ -199,7 +201,7 @@ function App() {
           </div>
         </div>
       </div>
-      <div className="mt-4 text-sm text-slate-600 text-left md:text-center leading-6 ml-6 mr-4 mb-4">
+      <div className="mt-4 text-xs md:text-sm text-slate-600 text-left md:text-center leading-5 ml-6 mr-4 mb-4">
         Made by&nbsp;
         <a
           className="border-b-2 border-slate-600 border-dotted"

@@ -35,3 +35,13 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 input[type="color"]::-webkit-color-swatch {
   border: none;
 }
+
+#appTitle {
+  display: none;
+}
+
+@media (min-height: 620px) {
+  #appTitle {
+    display: block;
+  }
+}
