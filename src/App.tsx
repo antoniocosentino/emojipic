@@ -69,7 +69,6 @@ function App() {
   const [scrollAmount, setScrollAmount] = useState(window.scrollY);
   const [viewPort, setViewport] = useState(getViewport());
 
-  // AI Mode states
   const [isAiMode, setIsAiMode] = useState(false);
   const [openAiApiKey, setOpenAiApiKey] = useState(() => {
     return localStorage.getItem("openai-api-key") || "";
@@ -87,15 +86,13 @@ function App() {
 
   const html2CanvasOptions = {
     y: canvasDistanceToTop + scrollAmount,
-    useCORS: true, // Enable CORS for external images
-    allowTaint: true, // Allow tainted canvas
-    backgroundColor: null, // Preserve transparency
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
   };
 
   const handleDownloadImage = async () => {
-    // If we're in AI mode and have a generated image, wait a bit to ensure it's fully rendered
     if (isAiMode && generatedImageUrl) {
-      // Small delay to ensure the image is fully rendered in the DOM
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
@@ -136,14 +133,12 @@ function App() {
     window.addEventListener("scroll", scrollHandler, false);
   });
 
-  // Save API key to localStorage whenever it changes
   useEffect(() => {
     if (openAiApiKey) {
       localStorage.setItem("openai-api-key", openAiApiKey);
     }
   }, [openAiApiKey]);
 
-  // Helper function to remove background and create transparency
   const removeBackground = (imageDataUrl: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -153,14 +148,11 @@ function App() {
         canvas.height = img.height;
         const ctx = canvas.getContext("2d")!;
 
-        // Draw the image onto the canvas
         ctx.drawImage(img, 0, 0);
 
-        // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Sample corner pixels to determine background color
         const corners = [
           { x: 0, y: 0 },
           { x: canvas.width - 1, y: 0 },
@@ -168,7 +160,6 @@ function App() {
           { x: canvas.width - 1, y: canvas.height - 1 },
         ];
 
-        // Get the most common corner color as background
         const cornerColors: { [key: string]: number } = {};
         corners.forEach((corner) => {
           const index = (corner.y * canvas.width + corner.x) * 4;
@@ -179,34 +170,28 @@ function App() {
           cornerColors[colorKey] = (cornerColors[colorKey] || 0) + 1;
         });
 
-        // Find the most common corner color
         const bgColor = Object.entries(cornerColors)
           .sort(([, a], [, b]) => b - a)[0][0]
           .split(",")
           .map(Number);
 
-        // Remove background with tolerance
         const tolerance = 30;
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
 
-          // Calculate color difference
           const dr = Math.abs(r - bgColor[0]);
           const dg = Math.abs(g - bgColor[1]);
           const db = Math.abs(b - bgColor[2]);
 
-          // If color is similar to background, make it transparent
           if (dr < tolerance && dg < tolerance && db < tolerance) {
-            data[i + 3] = 0; // Set alpha to 0 (transparent)
+            data[i + 3] = 0;
           }
         }
 
-        // Put the modified image data back
         ctx.putImageData(imageData, 0, 0);
 
-        // Convert to data URL with transparency
         resolve(canvas.toDataURL("image/png"));
       };
       img.crossOrigin = "anonymous";
@@ -214,38 +199,23 @@ function App() {
     });
   };
 
-  // AI Generation function with post-processing for transparency
   const generateAiEmoji = async () => {
-    if (!openAiApiKey.trim()) {
-      alert("Please enter your OpenAI API key first.");
-      return;
-    }
-
-    if (!emojiDescription.trim()) {
-      alert("Please describe the emoji you want to generate.");
-      return;
-    }
-
     setIsGenerating(true);
 
     try {
       const openai = new OpenAI({
         apiKey: openAiApiKey,
-        dangerouslyAllowBrowser: true, // Note: In production, API calls should be made from backend
+        dangerouslyAllowBrowser: true,
       });
 
-      // Hardcoded instructions that can be fine-tuned later
       const enhancedPrompt = `Create a simple, clear emoji-style illustration of: ${emojiDescription}.
         Requirements:
         - The result must be a single emoji-like icon in the style of Apple iOS emojis.
-        - Do not include any background, shadows, or borders.
-        - The output must be a PNG file with an **actual transparent background layer** (alpha channel).
-        - Do not simulate transparency with a checkerboard, grid, or solid fill.
-        - The subject should be centered, colorful, friendly, and easily recognizable.
+        - Render the main subject of the emoji on a single color background, using this hex: #00ff00
         `;
 
       const response = await openai.images.generate({
-        model: "dall-e-3", // or "gpt-image-1"
+        model: "dall-e-3",
         prompt: enhancedPrompt,
         n: 1,
         size: "1024x1024",
@@ -256,7 +226,6 @@ function App() {
       if (b64) {
         const dataUrl = `data:image/png;base64,${b64}`;
 
-        // Post-process to remove background and create transparency
         const transparentDataUrl = await removeBackground(dataUrl);
         setGeneratedImageUrl(transparentDataUrl);
       } else {
@@ -289,7 +258,6 @@ function App() {
           Emojipic
         </h1>
 
-        {/* AI Mode Toggle */}
         <div className="mb-6">
           <label className="flex items-center cursor-pointer">
             <input
@@ -304,7 +272,6 @@ function App() {
 
         <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
           <div className="w-full">
-            {/* AI Mode UI */}
             {isAiMode ? (
               <>
                 <label className="font-bold block">OpenAI API Key:</label>
@@ -340,7 +307,6 @@ function App() {
                 <br />
               </>
             ) : (
-              // Regular Mode UI
               <>
                 <label className="font-bold block">Emoji:</label>
                 <input
