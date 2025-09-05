@@ -253,20 +253,23 @@ function App() {
           gtag('config', '${TRACKING_ID}');`}
         </script>
       </Helmet>
-      <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
+      <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto rounded-lg">
         <h1 id="appTitle" className="text-4xl font-bold mb-4">
           Emojipic
         </h1>
 
         <div className="mb-6">
-          <label className="flex items-center cursor-pointer">
+          <label className="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               checked={isAiMode}
               onChange={(e) => setIsAiMode(e.target.checked)}
-              className="mr-3 h-4 w-4"
+              className="sr-only peer"
             />
-            <span className="font-bold text-lg">AI Mode</span>
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+            <span className="ms-3 text-lg font-bold text-gray-900">
+              AI Mode
+            </span>
           </label>
         </div>
 
@@ -299,7 +302,7 @@ function App() {
                     !openAiApiKey.trim() ||
                     !emojiDescription.trim()
                   }
-                  className="bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded block mb-4"
+                  className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded block mb-4"
                 >
                   {isGenerating ? "Generating..." : "Generate"}
                 </button>
