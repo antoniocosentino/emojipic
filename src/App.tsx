@@ -143,7 +143,103 @@ function App() {
     }
   }, [openAiApiKey]);
 
-  // AI Generation function
+  // Helper function to create a small transparent PNG as starting point
+  const createTransparentPngBlob = (): File => {
+    // Create a small transparent PNG (1x1 pixel)
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext("2d")!;
+
+    // Clear the canvas to transparent
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to blob and then to File
+    const dataURL = canvas.toDataURL("image/png");
+    const byteString = atob(dataURL.split(",")[1]);
+    const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new File([ab], "transparent.png", { type: mimeString });
+  };
+
+  // Helper function to remove background and create transparency
+  const removeBackground = (imageDataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Sample corner pixels to determine background color
+        const corners = [
+          { x: 0, y: 0 },
+          { x: canvas.width - 1, y: 0 },
+          { x: 0, y: canvas.height - 1 },
+          { x: canvas.width - 1, y: canvas.height - 1 },
+        ];
+
+        // Get the most common corner color as background
+        const cornerColors: { [key: string]: number } = {};
+        corners.forEach((corner) => {
+          const index = (corner.y * canvas.width + corner.x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const colorKey = `${r},${g},${b}`;
+          cornerColors[colorKey] = (cornerColors[colorKey] || 0) + 1;
+        });
+
+        // Find the most common corner color
+        const bgColor = Object.entries(cornerColors)
+          .sort(([, a], [, b]) => b - a)[0][0]
+          .split(",")
+          .map(Number);
+
+        // Remove background with tolerance
+        const tolerance = 30;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Calculate color difference
+          const dr = Math.abs(r - bgColor[0]);
+          const dg = Math.abs(g - bgColor[1]);
+          const db = Math.abs(b - bgColor[2]);
+
+          // If color is similar to background, make it transparent
+          if (dr < tolerance && dg < tolerance && db < tolerance) {
+            data[i + 3] = 0; // Set alpha to 0 (transparent)
+          }
+        }
+
+        // Put the modified image data back
+        ctx.putImageData(imageData, 0, 0);
+
+        // Convert to data URL with transparency
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.crossOrigin = "anonymous";
+      img.src = imageDataUrl;
+    });
+  };
+
+  // AI Generation function with post-processing for transparency
   const generateAiEmoji = async () => {
     if (!openAiApiKey.trim()) {
       alert("Please enter your OpenAI API key first.");
@@ -166,7 +262,7 @@ function App() {
       // Hardcoded instructions that can be fine-tuned later
       const enhancedPrompt = `Create a simple, clear emoji-style illustration of: ${emojiDescription}.
         Requirements:
-        - The result must be a single emoji-like icon in the Apple style.
+        - The result must be a single emoji-like icon in the style of Apple iOS emojis.
         - Do not include any background, shadows, or borders.
         - The output must be a PNG file with an **actual transparent background layer** (alpha channel).
         - Do not simulate transparency with a checkerboard, grid, or solid fill.
@@ -184,7 +280,10 @@ function App() {
       const b64 = response.data?.[0]?.b64_json;
       if (b64) {
         const dataUrl = `data:image/png;base64,${b64}`;
-        setGeneratedImageUrl(dataUrl);
+
+        // Post-process to remove background and create transparency
+        const transparentDataUrl = await removeBackground(dataUrl);
+        setGeneratedImageUrl(transparentDataUrl);
       } else {
         throw new Error("No base64 image received from OpenAI");
       }
@@ -360,7 +459,8 @@ function App() {
         >
           Antonio Cosentino
         </a>{" "}
-        &copy; 2023 · <span className="hidden md:inline-block">&nbsp;</span>
+        &copy; 2023 - 2025 ·{" "}
+        <span className="hidden md:inline-block">&nbsp;</span>
         All rights reserved ·{" "}
         <span className="hidden md:inline-block">&nbsp;</span>
         <a
