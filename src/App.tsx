@@ -303,7 +303,7 @@ function App() {
         </div>
 
         <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
-          <div>
+          <div className="w-full">
             {/* AI Mode UI */}
             {isAiMode ? (
               <>
@@ -322,7 +322,7 @@ function App() {
                   onChange={(e) => setEmojiDescription(e.target.value)}
                   placeholder="Describe the emoji you want to generate (e.g., a happy cat wearing sunglasses)"
                   rows={3}
-                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
+                  className="bg-gray-200 h-32 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
                 />
 
                 <button
