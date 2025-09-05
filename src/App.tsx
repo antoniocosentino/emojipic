@@ -208,11 +208,14 @@ function App() {
         dangerouslyAllowBrowser: true,
       });
 
-      const enhancedPrompt = `Create a simple, clear emoji-style illustration of: ${emojiDescription}.
-        Requirements:
-        - The result must be a single emoji-like icon in the style of Apple iOS emojis.
-        - Render the main subject of the emoji on a single color background, using this hex: #00ff00
-        `;
+      const enhancedPrompt = `Create a single, standalone emoji-style illustration of: ${emojiDescription}.
+        Strict requirements:
+        - The output must contain only the main subject, with no borders, buttons, frames, or extra elements.
+        - No square or rounded background, no shadows, no outlines, no decorations, no UI elements.
+        - Render the subject in the Apple iOS emoji style.
+        - Place it directly on a solid white background only.
+        - The subject should cover approximately 50% of the image area.
+        - Do not add text, symbols, or any additional objects.`;
 
       const response = await openai.images.generate({
         model: "dall-e-3",
