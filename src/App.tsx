@@ -3,6 +3,7 @@ import "./App.css";
 import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
 import { Helmet, HelmetProvider } from "react-helmet-async";
+import OpenAI from "openai";
 
 const packageJson = require("./../package.json");
 
@@ -68,6 +69,16 @@ function App() {
   const [scrollAmount, setScrollAmount] = useState(window.scrollY);
   const [viewPort, setViewport] = useState(getViewport());
 
+  const [isAiMode, setIsAiMode] = useState(false);
+  const [openAiApiKey, setOpenAiApiKey] = useState(() => {
+    return localStorage.getItem("openai-api-key") || "";
+  });
+  const [emojiDescription, setEmojiDescription] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
+    null
+  );
+
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
 
@@ -75,9 +86,16 @@ function App() {
 
   const html2CanvasOptions = {
     y: canvasDistanceToTop + scrollAmount,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
   };
 
   const handleDownloadImage = async () => {
+    if (isAiMode && generatedImageUrl) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     exportComponentAsPNG(downloadRef, {
       fileName: "emojipic.png",
       html2CanvasOptions,
@@ -115,6 +133,115 @@ function App() {
     window.addEventListener("scroll", scrollHandler, false);
   });
 
+  useEffect(() => {
+    if (openAiApiKey) {
+      localStorage.setItem("openai-api-key", openAiApiKey);
+    }
+  }, [openAiApiKey]);
+
+  const removeBackground = (imageDataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        const corners = [
+          { x: 0, y: 0 },
+          { x: canvas.width - 1, y: 0 },
+          { x: 0, y: canvas.height - 1 },
+          { x: canvas.width - 1, y: canvas.height - 1 },
+        ];
+
+        const cornerColors: { [key: string]: number } = {};
+        corners.forEach((corner) => {
+          const index = (corner.y * canvas.width + corner.x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const colorKey = `${r},${g},${b}`;
+          cornerColors[colorKey] = (cornerColors[colorKey] || 0) + 1;
+        });
+
+        const bgColor = Object.entries(cornerColors)
+          .sort(([, a], [, b]) => b - a)[0][0]
+          .split(",")
+          .map(Number);
+
+        const tolerance = 30;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          const dr = Math.abs(r - bgColor[0]);
+          const dg = Math.abs(g - bgColor[1]);
+          const db = Math.abs(b - bgColor[2]);
+
+          if (dr < tolerance && dg < tolerance && db < tolerance) {
+            data[i + 3] = 0;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.crossOrigin = "anonymous";
+      img.src = imageDataUrl;
+    });
+  };
+
+  const generateAiEmoji = async () => {
+    setIsGenerating(true);
+
+    try {
+      const openai = new OpenAI({
+        apiKey: openAiApiKey,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const enhancedPrompt = `Create a single, standalone emoji-style illustration of: ${emojiDescription}.
+        Strict requirements:
+        - The output must contain only the main subject, with no borders, buttons, frames, or extra elements.
+        - No square or rounded background, no shadows, no outlines, no decorations, no UI elements.
+        - Render the subject in the Apple iOS emoji style.
+        - Place it directly on a solid white background only.
+        - The subject should cover approximately 50% of the image area.
+        - Do not add text, symbols, or any additional objects.`;
+
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: enhancedPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json",
+      });
+
+      const b64 = response.data?.[0]?.b64_json;
+      if (b64) {
+        const dataUrl = `data:image/png;base64,${b64}`;
+
+        const transparentDataUrl = await removeBackground(dataUrl);
+        setGeneratedImageUrl(transparentDataUrl);
+      } else {
+        throw new Error("No base64 image received from OpenAI");
+      }
+    } catch (error) {
+      console.error("Error generating AI emoji:", error);
+      alert("Error generating emoji. Please check your API key and try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <HelmetProvider>
       <Helmet>
@@ -129,31 +256,84 @@ function App() {
           gtag('config', '${TRACKING_ID}');`}
         </script>
       </Helmet>
-      <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto">
+      <div className="shadow-lg mt-4 lg:mt-8 p-4 sm:p-8 bg-slate-50 max-w-6xl ml-4 mr-4 lg:ml-auto lg:mr-auto rounded-lg">
         <h1 id="appTitle" className="text-4xl font-bold mb-4">
           Emojipic
         </h1>
 
-        <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
-          <div>
-            <label className="font-bold block">Emoji:</label>
+        <div className="mb-6">
+          <label className="inline-flex items-center cursor-pointer">
             <input
-              type="text"
-              value={emoji}
-              onChange={(e) => setEmoji(e.target.value)}
-              size={1}
-              maxLength={2}
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
+              type="checkbox"
+              checked={isAiMode}
+              onChange={(e) => setIsAiMode(e.target.checked)}
+              className="sr-only peer"
             />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+            <span className="ms-3 text-lg font-bold text-gray-900">
+              AI Mode
+            </span>
+          </label>
+        </div>
 
-            <button
-              className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
-              onClick={() => setEmoji(getRandomEmoji)}
-            >
-              Randomize emoji
-            </button>
+        <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
+          <div className="w-full">
+            {isAiMode ? (
+              <>
+                <label className="font-bold block">OpenAI API Key:</label>
+                <input
+                  type="password"
+                  value={openAiApiKey}
+                  onChange={(e) => setOpenAiApiKey(e.target.value)}
+                  placeholder="Enter your OpenAI API key"
+                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
+                />
 
-            <br />
+                <label className="font-bold block">Describe your emoji:</label>
+                <textarea
+                  value={emojiDescription}
+                  onChange={(e) => setEmojiDescription(e.target.value)}
+                  placeholder="Describe the emoji you want to generate (e.g., a happy cat wearing sunglasses)"
+                  rows={3}
+                  className="bg-gray-200 h-32 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
+                />
+
+                <button
+                  onClick={generateAiEmoji}
+                  disabled={
+                    isGenerating ||
+                    !openAiApiKey.trim() ||
+                    !emojiDescription.trim()
+                  }
+                  className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded block mb-4"
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </button>
+
+                <br />
+              </>
+            ) : (
+              <>
+                <label className="font-bold block">Emoji:</label>
+                <input
+                  type="text"
+                  value={emoji}
+                  onChange={(e) => setEmoji(e.target.value)}
+                  size={1}
+                  maxLength={2}
+                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
+                />
+
+                <button
+                  className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
+                  onClick={() => setEmoji(getRandomEmoji)}
+                >
+                  Randomize emoji
+                </button>
+
+                <br />
+              </>
+            )}
 
             <label className="font-bold block">Background color:</label>
             <input
@@ -186,7 +366,22 @@ function App() {
                 backgroundColor: bgColor,
               }}
             >
-              <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
+              {isAiMode && generatedImageUrl ? (
+                <img
+                  crossOrigin="anonymous"
+                  src={generatedImageUrl}
+                  alt="AI Generated Emoji"
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <span
+                  className={`${
+                    isAiMode ? "hidden" : ""
+                  } text-emojiSmall lg:text-emoji`}
+                >
+                  {emoji}
+                </span>
+              )}
             </div>
 
             <div className="text-center mt-8">
@@ -211,7 +406,8 @@ function App() {
         >
           Antonio Cosentino
         </a>{" "}
-        &copy; 2023 · <span className="hidden md:inline-block">&nbsp;</span>
+        &copy; 2023 - 2025 ·{" "}
+        <span className="hidden md:inline-block">&nbsp;</span>
         All rights reserved ·{" "}
         <span className="hidden md:inline-block">&nbsp;</span>
         <a
