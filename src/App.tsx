@@ -143,31 +143,6 @@ function App() {
     }
   }, [openAiApiKey]);
 
-  // Helper function to create a small transparent PNG as starting point
-  const createTransparentPngBlob = (): File => {
-    // Create a small transparent PNG (1x1 pixel)
-    const canvas = document.createElement("canvas");
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext("2d")!;
-
-    // Clear the canvas to transparent
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Convert canvas to blob and then to File
-    const dataURL = canvas.toDataURL("image/png");
-    const byteString = atob(dataURL.split(",")[1]);
-    const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-
-    return new File([ab], "transparent.png", { type: mimeString });
-  };
-
   // Helper function to remove background and create transparency
   const removeBackground = (imageDataUrl: string): Promise<string> => {
     return new Promise((resolve) => {
