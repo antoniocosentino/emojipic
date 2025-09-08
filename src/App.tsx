@@ -78,6 +78,7 @@ function App() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
     null
   );
+  const [imageSize, setImageSize] = useState(100);
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
@@ -295,6 +296,18 @@ function App() {
                   className="bg-gray-200 h-32 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
                 />
 
+                <label className="font-bold block mb-2">Image Size: {imageSize}%</label>
+                <input
+                  id="image-size-range"
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="10"
+                  value={imageSize}
+                  onChange={(e) => setImageSize(Number(e.target.value))}
+                  className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                />
+
                 <button
                   onClick={generateAiEmoji}
                   disabled={
@@ -368,7 +381,13 @@ function App() {
                   crossOrigin="anonymous"
                   src={generatedImageUrl}
                   alt="AI Generated Emoji"
-                  className="max-w-full max-h-full object-contain"
+                  className="object-contain"
+                  style={{
+                    width: `${imageSize}%`,
+                    height: `${imageSize}%`,
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                  }}
                 />
               ) : (
                 <span
