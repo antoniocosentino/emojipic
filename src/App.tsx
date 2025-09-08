@@ -296,7 +296,9 @@ function App() {
                   className="bg-gray-200 h-32 appearance-none border-2 border-gray-200 rounded w-full max-w-sm py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 mb-4"
                 />
 
-                <label className="font-bold block mb-2">Image Size: {imageSize}%</label>
+                <label className="font-bold block mb-2">
+                  Image Size: {imageSize}%
+                </label>
                 <input
                   id="image-size-range"
                   type="range"
@@ -376,27 +378,25 @@ function App() {
                 backgroundColor: bgColor,
               }}
             >
-              {isAiMode && generatedImageUrl ? (
-                <img
-                  crossOrigin="anonymous"
-                  src={generatedImageUrl}
-                  alt="AI Generated Emoji"
-                  className="object-contain"
-                  style={{
-                    width: `${imageSize}%`,
-                    height: `${imageSize}%`,
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                  }}
-                />
+              {isAiMode ? (
+                isGenerating ? (
+                  <span className="text-9xl bounce-animation">⌛</span>
+                ) : generatedImageUrl ? (
+                  <img
+                    crossOrigin="anonymous"
+                    src={generatedImageUrl}
+                    alt="AI Generated Emoji"
+                    className="object-contain"
+                    style={{
+                      width: `${imageSize}%`,
+                      height: `${imageSize}%`,
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                    }}
+                  />
+                ) : null
               ) : (
-                <span
-                  className={`${
-                    isAiMode ? "hidden" : ""
-                  } text-emojiSmall lg:text-emoji`}
-                >
-                  {emoji}
-                </span>
+                <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
               )}
             </div>
 
