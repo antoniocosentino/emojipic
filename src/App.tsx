@@ -139,6 +139,10 @@ function App() {
     }
   }, [openAiApiKey]);
 
+  const createAntiShadowPrompt = (description: string): string => {
+    return `Flat emoji illustration of ${description}. NO shadows, NO depth, NO 3D effects, NO shading, NO highlights, NO gradients, NO drop shadows, NO cast shadows, NO directional lighting, NO volume, NO perspective, NO dimensionality. Pure flat design on white background. Try to imitate the Apple iOS emoji style as much as possible.`;
+  };
+
   const removeBackground = (imageDataUrl: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -208,14 +212,7 @@ function App() {
         dangerouslyAllowBrowser: true,
       });
 
-      const enhancedPrompt = `Create a single, standalone emoji-style illustration of: ${emojiDescription}.
-        Strict requirements:
-        - The output must contain only the main subject, with no borders, buttons, frames, or extra elements.
-        - No square or rounded background, no shadows, no outlines, no decorations, no UI elements.
-        - Render the subject in the Apple iOS emoji style.
-        - Place it directly on a solid white background only.
-        - The subject should cover approximately 50% of the image area.
-        - Do not add text, symbols, or any additional objects.`;
+      const enhancedPrompt = createAntiShadowPrompt(emojiDescription);
 
       const response = await openai.images.generate({
         model: "dall-e-3",
