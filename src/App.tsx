@@ -141,7 +141,7 @@ function App() {
   }, [openAiApiKey]);
 
   const createAntiShadowPrompt = (description: string): string => {
-    return `Flat emoji illustration of ${description}. NO shadows, NO depth, NO 3D effects, NO shading, NO highlights, NO gradients, NO drop shadows, NO cast shadows, NO directional lighting, NO volume, NO perspective, NO dimensionality. Pure flat design on white background. Try to imitate the Apple iOS emoji style as much as possible.`;
+    return `Apple iOS emoji style of: "${description}". OFFICIAL Apple emoji. Simple shapes. Minimal. Vibrant, uniform colors. Clean white background.`;
   };
 
   const removeBackground = (imageDataUrl: string): Promise<string> => {
