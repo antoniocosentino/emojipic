@@ -9,7 +9,9 @@ Emojipic is a simple web app that allows you to generate a png file starting fro
 
 [Try it out!](https://antoniocosentino.github.io/emojipic/)
 
-![emojipic](/public/emojipic-demo.mp4)
+
+https://github.com/user-attachments/assets/528ecfb4-510b-4a3c-a16e-52b10a6cddb9
+
 
 ## Project info
 
