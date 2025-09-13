@@ -85,6 +85,7 @@ function App() {
   const throttledViewport = useThrottle(viewPort);
 
   const downloadRef = useRef<HTMLDivElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   const html2CanvasOptions = {
     y: canvasDistanceToTop + scrollAmount,
@@ -136,6 +137,40 @@ function App() {
     [mode]
   );
 
+  const handleHiddenInputPaste = async (
+    event: React.ClipboardEvent<HTMLInputElement>
+  ) => {
+    if (mode !== "paste") return;
+
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    event.preventDefault();
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (typeof result === "string") {
+              setPastedImageUrl(result);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.value = "";
+      hiddenInputRef.current.blur();
+    }
+  };
+
   const updateDistanceToTop = () => {
     const canvaselement = downloadRef.current;
     const distanceToTop = canvaselement?.getBoundingClientRect().top ?? 0;
@@ -174,7 +209,6 @@ function App() {
     };
   }, [mode, handlePaste]);
 
-  // Clear images when switching modes
   useEffect(() => {
     if (mode !== "paste") {
       setPastedImageUrl(null);
@@ -488,6 +522,7 @@ function App() {
               ) : mode === "paste" ? (
                 pastedImageUrl ? (
                   <img
+                    onClick={() => setPastedImageUrl(null)}
                     src={pastedImageUrl}
                     alt="Pasted content"
                     className="object-contain"
@@ -499,9 +534,26 @@ function App() {
                     }}
                   />
                 ) : (
-                  <div className="text-center text-gray-500">
+                  <div className="text-center text-gray-500 w-full h-full flex flex-col items-center justify-center relative">
                     <div className="text-6xl mb-4">📋</div>
-                    <div className="text-lg">Paste an image here</div>
+                    <div className="text-lg mb-4">Paste an image here</div>
+
+                    <input
+                      ref={hiddenInputRef}
+                      type="text"
+                      placeholder="Tap here and paste"
+                      onPaste={handleHiddenInputPaste}
+                      onClick={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.select();
+                      }}
+                      onFocus={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.select();
+                      }}
+                      className="w-40 px-3 py-2 text-center text-sm bg-white bg-opacity-20 border border-gray-300 border-opacity-50 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500"
+                      style={{ backdropFilter: "blur(10px)" }}
+                    />
                   </div>
                 )
               ) : (
