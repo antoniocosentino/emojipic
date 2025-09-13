@@ -3,9 +3,9 @@
 Emojipic is a simple web app that lets you generate PNG images from emojis with a custom background color.
 
 With the 3.0 release, Emojipic introduces three modes:
-	•	**Standard Mode**: Generate a PNG from a standard emoji.
-	•	**AI Mode**: Create your own emoji from a text prompt (requires a valid OpenAI API key).
-	•	**Paste Mode**: Paste any image into the preview area and adjust its proportions and background color.
+- **Standard Mode**: Generate a PNG from a standard emoji.
+- **AI Mode**: Create your own emoji from a text prompt (requires a valid OpenAI API key).
+- **Paste Mode**: Paste any image into the preview area and adjust its proportions and background color.
 
 
 # Video Demos
