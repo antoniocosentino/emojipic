@@ -12,7 +12,7 @@ Emojipic is a simple web app that allows you to generate a png file starting fro
 [Try it out!](https://antoniocosentino.github.io/emojipic/)
 
 
-https://github.com/user-attachments/assets/528ecfb4-510b-4a3c-a16e-52b10a6cddb9
+https://github.com/user-attachments/assets/366d6bd6-185a-4654-8eb0-be6d51929fd1
 
 
 ## Project info
