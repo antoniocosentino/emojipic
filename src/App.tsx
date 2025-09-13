@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "./App.css";
 import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
@@ -69,7 +69,7 @@ function App() {
   const [scrollAmount, setScrollAmount] = useState(window.scrollY);
   const [viewPort, setViewport] = useState(getViewport());
 
-  const [isAiMode, setIsAiMode] = useState(false);
+  const [mode, setMode] = useState<'standard' | 'ai' | 'paste'>('standard');
   const [openAiApiKey, setOpenAiApiKey] = useState(() => {
     return localStorage.getItem("openai-api-key") || "";
   });
@@ -79,6 +79,7 @@ function App() {
     null
   );
   const [imageSize, setImageSize] = useState(100);
+  const [pastedImageUrl, setPastedImageUrl] = useState<string | null>(null);
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
@@ -93,7 +94,10 @@ function App() {
   };
 
   const handleDownloadImage = async () => {
-    if (isAiMode && generatedImageUrl) {
+    if (mode === 'ai' && generatedImageUrl) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (mode === 'paste' && pastedImageUrl) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
@@ -102,6 +106,32 @@ function App() {
       html2CanvasOptions,
     });
   };
+
+  const handlePaste = useCallback(async (event: Event) => {
+    const clipboardEvent = event as ClipboardEvent;
+    if (mode !== 'paste') return;
+    
+    const items = clipboardEvent.clipboardData?.items;
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (typeof result === 'string') {
+              setPastedImageUrl(result);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+  }, [mode]);
 
   const updateDistanceToTop = () => {
     const canvaselement = downloadRef.current;
@@ -132,7 +162,24 @@ function App() {
   useEffect(() => {
     window.addEventListener("resize", resizeHandler, false);
     window.addEventListener("scroll", scrollHandler, false);
-  });
+    window.addEventListener("paste", handlePaste, false);
+    
+    return () => {
+      window.removeEventListener("resize", resizeHandler, false);
+      window.removeEventListener("scroll", scrollHandler, false);
+      window.removeEventListener("paste", handlePaste, false);
+    };
+  }, [mode, handlePaste]);
+
+  // Clear images when switching modes
+  useEffect(() => {
+    if (mode !== 'paste') {
+      setPastedImageUrl(null);
+    }
+    if (mode !== 'ai') {
+      setGeneratedImageUrl(null);
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (openAiApiKey) {
@@ -260,23 +307,21 @@ function App() {
         </h1>
 
         <div className="mb-6">
-          <label className="inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAiMode}
-              onChange={(e) => setIsAiMode(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-            <span className="ms-3 text-lg font-bold text-gray-900">
-              AI Mode
-            </span>
-          </label>
+          <label className="font-bold block mb-2">Mode:</label>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value as 'standard' | 'ai' | 'paste')}
+            className="bg-gray-200 border-2 border-gray-200 rounded py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-lg font-bold"
+          >
+            <option value="standard">Standard Mode</option>
+            <option value="ai">AI Mode</option>
+            <option value="paste">Paste Mode</option>
+          </select>
         </div>
 
         <div className="flex justify-between mt-0 sm:mt-6 flex-col lg:flex-row">
           <div className="w-full">
-            {isAiMode ? (
+            {mode === 'ai' ? (
               <>
                 <label className="font-bold block">OpenAI API Key:</label>
                 <input
@@ -321,6 +366,30 @@ function App() {
                 >
                   {isGenerating ? "Generating..." : "Generate"}
                 </button>
+
+                <br />
+              </>
+            ) : mode === 'paste' ? (
+              <>
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm text-blue-800">
+                    📋 Copy an image to your clipboard and press <kbd className="px-1 py-0.5 bg-blue-200 rounded">Ctrl+V</kbd> (or <kbd className="px-1 py-0.5 bg-blue-200 rounded">Cmd+V</kbd> on Mac) to paste it here.
+                  </p>
+                </div>
+
+                <label className="font-bold block mb-2">
+                  Image Size: {imageSize}%
+                </label>
+                <input
+                  id="image-size-range"
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="10"
+                  value={imageSize}
+                  onChange={(e) => setImageSize(Number(e.target.value))}
+                  className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                />
 
                 <br />
               </>
@@ -378,7 +447,7 @@ function App() {
                 backgroundColor: bgColor,
               }}
             >
-              {isAiMode ? (
+              {mode === 'ai' ? (
                 isGenerating ? (
                   <span className="text-9xl bounce-animation">⌛</span>
                 ) : generatedImageUrl ? (
@@ -395,6 +464,26 @@ function App() {
                     }}
                   />
                 ) : null
+              ) : mode === 'paste' ? (
+                pastedImageUrl ? (
+                  <img
+                    src={pastedImageUrl}
+                    alt="Pasted content"
+                    className="object-contain"
+                    style={{
+                      width: `${imageSize}%`,
+                      height: `${imageSize}%`,
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <div className="text-6xl mb-4">📋</div>
+                    <div className="text-lg">Paste an image here</div>
+                    <div className="text-sm">(Ctrl+V or Cmd+V)</div>
+                  </div>
+                )
               ) : (
                 <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
               )}
