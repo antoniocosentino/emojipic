@@ -536,12 +536,14 @@ function App() {
                 ) : (
                   <div className="text-center text-gray-500 w-full h-full flex flex-col items-center justify-center relative">
                     <div className="text-6xl mb-4">📋</div>
-                    <div className="text-lg mb-4">Paste an image here</div>
+                    <div className="text-lg mb-4 hidden md:inline-block">
+                      Paste an image here (Ctrl+V or Cmd+V)
+                    </div>
 
                     <input
                       ref={hiddenInputRef}
                       type="text"
-                      placeholder="Tap here and paste"
+                      placeholder="Paste an image here"
                       onPaste={handleHiddenInputPaste}
                       onClick={(e) => {
                         const target = e.target as HTMLInputElement;
@@ -551,7 +553,7 @@ function App() {
                         const target = e.target as HTMLInputElement;
                         target.select();
                       }}
-                      className="w-40 px-3 py-2 text-center text-sm bg-white bg-opacity-20 border border-gray-300 border-opacity-50 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500"
+                      className="md:hidden w-40 px-3 py-2 text-center text-sm bg-white bg-opacity-20 border border-gray-300 border-opacity-50 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500"
                       style={{ backdropFilter: "blur(10px)" }}
                     />
                   </div>
