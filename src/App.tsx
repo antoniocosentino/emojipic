@@ -416,10 +416,10 @@ function App() {
                   step="1"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
-                  onMouseDown={() => setIsDraggingSlider(true)}
-                  onMouseUp={() => setIsDraggingSlider(false)}
-                  onTouchStart={() => setIsDraggingSlider(true)}
-                  onTouchEnd={() => setIsDraggingSlider(false)}
+                  onMouseDown={generatedImageUrl ? () => setIsDraggingSlider(true) : undefined}
+                  onMouseUp={generatedImageUrl ? () => setIsDraggingSlider(false) : undefined}
+                  onTouchStart={generatedImageUrl ? () => setIsDraggingSlider(true) : undefined}
+                  onTouchEnd={generatedImageUrl ? () => setIsDraggingSlider(false) : undefined}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
@@ -451,10 +451,10 @@ function App() {
                   step="1"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
-                  onMouseDown={() => setIsDraggingSlider(true)}
-                  onMouseUp={() => setIsDraggingSlider(false)}
-                  onTouchStart={() => setIsDraggingSlider(true)}
-                  onTouchEnd={() => setIsDraggingSlider(false)}
+                  onMouseDown={pastedImageUrl ? () => setIsDraggingSlider(true) : undefined}
+                  onMouseUp={pastedImageUrl ? () => setIsDraggingSlider(false) : undefined}
+                  onTouchStart={pastedImageUrl ? () => setIsDraggingSlider(true) : undefined}
+                  onTouchEnd={pastedImageUrl ? () => setIsDraggingSlider(false) : undefined}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
