@@ -16,12 +16,13 @@ https://github.com/user-attachments/assets/cc42f41f-6862-4bc1-aff5-bc463fa622a7
 ---
 
 ## AI Mode
-https://github.com/user-attachments/assets/4e70dac9-d090-4ab4-b4fa-2f80ff679b9a
+https://github.com/user-attachments/assets/2f42a93d-1cfd-4bd7-a3a9-2704586da5d9
+
 
 ---
 
 ## Paste Mode
-https://github.com/user-attachments/assets/edab3448-07f0-4442-bf61-8286dffcd083
+https://github.com/user-attachments/assets/acc5abc8-7790-47b3-ac02-9b9d71208cf3
 
 ---
 
