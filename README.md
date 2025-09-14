@@ -11,25 +11,23 @@ With the 3.0 release, Emojipic introduces three modes:
 # Video Demos
 
 ## Standard Mode
-https://github.com/user-attachments/assets/cc42f41f-6862-4bc1-aff5-bc463fa622a7
+https://github.com/user-attachments/assets/af1b1180-5cbe-4c31-978b-d15200b7f6a6
 
 ---
 
 ## AI Mode
-https://github.com/user-attachments/assets/2f42a93d-1cfd-4bd7-a3a9-2704586da5d9
-
+https://github.com/user-attachments/assets/3b74f03c-69f9-4b7b-b9e0-d48d1125bd6a
 
 ---
 
 ## Paste Mode
-https://github.com/user-attachments/assets/acc5abc8-7790-47b3-ac02-9b9d71208cf3
+https://github.com/user-attachments/assets/a3a36146-f8d1-4034-968c-392ada0bf147
 
 ---
 
 # Live Demo
 
 [Click here to try it out](https://antoniocosentino.github.io/emojipic/)
-
 
 ---
 
