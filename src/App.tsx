@@ -412,7 +412,7 @@ function App() {
                   type="range"
                   min="10"
                   max="100"
-                  step="5"
+                  step="1"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
@@ -444,7 +444,7 @@ function App() {
                   type="range"
                   min="10"
                   max="100"
-                  step="5"
+                  step="1"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
