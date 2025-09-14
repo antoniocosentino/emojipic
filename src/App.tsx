@@ -502,14 +502,16 @@ function App() {
           </div>
           <div>
             <div className="relative">
-              <div
-                className="absolute lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none pointer-events-none"
-                style={{
-                  backgroundColor: bgColor,
-                  zIndex: 1,
-                }}
-              >
-                <GuidelinesSVG className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]" />
+              <div className="absolute lg:h-[600px] w-full h-[200px] flex items-center justify-center mt-0 ml-auto mr-auto select-none pointer-events-none">
+                <div
+                  className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]"
+                  style={{
+                    backgroundColor: bgColor,
+                    zIndex: 1,
+                  }}
+                >
+                  <GuidelinesSVG className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]" />
+                </div>
               </div>
 
               <div
