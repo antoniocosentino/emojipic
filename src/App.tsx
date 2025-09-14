@@ -417,6 +417,8 @@ function App() {
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
                   onMouseUp={() => setIsDraggingSlider(false)}
+                  onTouchStart={() => setIsDraggingSlider(true)}
+                  onTouchEnd={() => setIsDraggingSlider(false)}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
@@ -449,6 +451,8 @@ function App() {
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
                   onMouseUp={() => setIsDraggingSlider(false)}
+                  onTouchStart={() => setIsDraggingSlider(true)}
+                  onTouchEnd={() => setIsDraggingSlider(false)}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
