@@ -412,7 +412,7 @@ function App() {
                   type="range"
                   min="10"
                   max="100"
-                  step="10"
+                  step="5"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
@@ -444,7 +444,7 @@ function App() {
                   type="range"
                   min="10"
                   max="100"
-                  step="10"
+                  step="5"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
                   onMouseDown={() => setIsDraggingSlider(true)}
@@ -502,96 +502,90 @@ function App() {
           </div>
           <div>
             <div className="relative">
-              {/* Guidelines overlay - hidden by default, visible when dragging slider in AI/paste mode */}
-              {(mode === "ai" || mode === "paste") && (
-                <div
-                  className="absolute lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none pointer-events-none"
-                  style={{
-                    backgroundColor: bgColor,
-                    zIndex: 1,
-                  }}
-                >
-                  <GuidelinesSVG 
-                    className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]"
-                    style={{
-                      opacity: isDraggingSlider ? 1 : 0,
-                      transition: 'opacity 0.2s ease-in-out'
-                    }}
-                  />
-                </div>
-              )}
-              
+              <div
+                className="absolute lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none pointer-events-none"
+                style={{
+                  backgroundColor: bgColor,
+                  zIndex: 1,
+                }}
+              >
+                <GuidelinesSVG className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]" />
+              </div>
+
               <div
                 ref={downloadRef}
                 className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none"
                 style={{
                   backgroundColor: bgColor,
-                  opacity: (mode === "ai" || mode === "paste") && isDraggingSlider ? 0.8 : 1,
-                  transition: 'opacity 0.2s ease-in-out',
-                  position: 'relative',
+                  opacity:
+                    (mode === "ai" || mode === "paste") && isDraggingSlider
+                      ? 0.8
+                      : 1,
+                  transition: "opacity 0.2s ease-in-out",
+                  position: "relative",
                   zIndex: 2,
                 }}
               >
-              {mode === "ai" ? (
-                isGenerating ? (
-                  <span className="text-9xl bounce-animation">⌛</span>
-                ) : generatedImageUrl ? (
-                  <img
-                    crossOrigin="anonymous"
-                    src={generatedImageUrl}
-                    alt="AI Generated Emoji"
-                    className="object-contain"
-                    style={{
-                      width: `${imageSize}%`,
-                      height: `${imageSize}%`,
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                    }}
-                  />
-                ) : null
-              ) : mode === "paste" ? (
-                pastedImageUrl ? (
-                  <img
-                    onClick={() => setPastedImageUrl(null)}
-                    src={pastedImageUrl}
-                    alt="Pasted content"
-                    className="object-contain"
-                    style={{
-                      width: `${imageSize}%`,
-                      height: `${imageSize}%`,
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                    }}
-                  />
-                ) : (
-                  <div className="text-center text-gray-500 w-full h-full flex flex-col items-center justify-center relative">
-                    <div className="text-6xl mb-4">📋</div>
-                    <div className="text-lg mb-4 hidden md:inline-block">
-                      Paste an image here (Ctrl+V or Cmd+V)
-                    </div>
-
-                    <input
-                      ref={hiddenInputRef}
-                      type="text"
-                      placeholder="Paste an image here"
-                      onPaste={handleHiddenInputPaste}
-                      onClick={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.select();
+                {mode === "ai" ? (
+                  isGenerating ? (
+                    <span className="text-9xl bounce-animation">⌛</span>
+                  ) : generatedImageUrl ? (
+                    <img
+                      crossOrigin="anonymous"
+                      src={generatedImageUrl}
+                      alt="AI Generated Emoji"
+                      className="object-contain"
+                      style={{
+                        width: `${imageSize}%`,
+                        height: `${imageSize}%`,
+                        maxWidth: "100%",
+                        maxHeight: "100%",
                       }}
-                      onFocus={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.select();
-                      }}
-                      className="md:hidden w-40 px-3 py-2 text-center text-sm bg-white bg-opacity-20 border border-gray-300 border-opacity-50 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500"
-                      style={{ backdropFilter: "blur(10px)" }}
                     />
-                  </div>
-                )
-              ) : (
-                <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
-              )}
-            </div>
+                  ) : null
+                ) : mode === "paste" ? (
+                  pastedImageUrl ? (
+                    <img
+                      onClick={() => setPastedImageUrl(null)}
+                      src={pastedImageUrl}
+                      alt="Pasted content"
+                      className="object-contain"
+                      style={{
+                        width: `${imageSize}%`,
+                        height: `${imageSize}%`,
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center text-gray-500 w-full h-full flex flex-col items-center justify-center relative">
+                      <div className="text-6xl mb-4">📋</div>
+                      <div className="text-lg mb-4 hidden md:inline-block">
+                        Paste an image here (Ctrl+V or Cmd+V)
+                      </div>
+
+                      <input
+                        ref={hiddenInputRef}
+                        type="text"
+                        placeholder="Paste an image here"
+                        onPaste={handleHiddenInputPaste}
+                        onClick={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.select();
+                        }}
+                        onFocus={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.select();
+                        }}
+                        className="md:hidden w-40 px-3 py-2 text-center text-sm bg-white bg-opacity-20 border border-gray-300 border-opacity-50 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500"
+                        style={{ backdropFilter: "blur(10px)" }}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
+                )}
+              </div>
             </div>
 
             <div className="text-center mt-8">
