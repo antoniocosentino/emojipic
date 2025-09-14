@@ -408,6 +408,7 @@ function App() {
                   Image Size: {imageSize}%
                 </label>
                 <input
+                  disabled={generatedImageUrl === null}
                   id="image-size-range"
                   type="range"
                   min="10"
@@ -442,6 +443,7 @@ function App() {
                   Image Size: {imageSize}%
                 </label>
                 <input
+                  disabled={pastedImageUrl === null}
                   id="image-size-range"
                   type="range"
                   min="10"
