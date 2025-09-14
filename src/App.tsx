@@ -4,6 +4,7 @@ import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import OpenAI from "openai";
+import { ReactComponent as GuidelinesSVG } from "./guidelines.svg";
 
 const packageJson = require("./../package.json");
 
@@ -80,6 +81,7 @@ function App() {
   );
   const [imageSize, setImageSize] = useState(100);
   const [pastedImageUrl, setPastedImageUrl] = useState<string | null>(null);
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
@@ -413,6 +415,8 @@ function App() {
                   step="10"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
+                  onMouseDown={() => setIsDraggingSlider(true)}
+                  onMouseUp={() => setIsDraggingSlider(false)}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
@@ -443,6 +447,8 @@ function App() {
                   step="10"
                   value={imageSize}
                   onChange={(e) => setImageSize(Number(e.target.value))}
+                  onMouseDown={() => setIsDraggingSlider(true)}
+                  onMouseUp={() => setIsDraggingSlider(false)}
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
 
@@ -495,13 +501,37 @@ function App() {
             </button>
           </div>
           <div>
-            <div
-              ref={downloadRef}
-              className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none"
-              style={{
-                backgroundColor: bgColor,
-              }}
-            >
+            <div className="relative">
+              {/* Guidelines overlay - hidden by default, visible when dragging slider in AI/paste mode */}
+              {(mode === "ai" || mode === "paste") && (
+                <div
+                  className="absolute lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none pointer-events-none"
+                  style={{
+                    backgroundColor: bgColor,
+                    zIndex: 1,
+                  }}
+                >
+                  <GuidelinesSVG 
+                    className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]"
+                    style={{
+                      opacity: isDraggingSlider ? 1 : 0,
+                      transition: 'opacity 0.2s ease-in-out'
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div
+                ref={downloadRef}
+                className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px] flex items-center justify-center mt-8 lg:mt-0 ml-auto mr-auto select-none"
+                style={{
+                  backgroundColor: bgColor,
+                  opacity: (mode === "ai" || mode === "paste") && isDraggingSlider ? 0.8 : 1,
+                  transition: 'opacity 0.2s ease-in-out',
+                  position: 'relative',
+                  zIndex: 2,
+                }}
+              >
               {mode === "ai" ? (
                 isGenerating ? (
                   <span className="text-9xl bounce-animation">⌛</span>
@@ -561,6 +591,7 @@ function App() {
               ) : (
                 <span className="text-emojiSmall lg:text-emoji">{emoji}</span>
               )}
+            </div>
             </div>
 
             <div className="text-center mt-8">
