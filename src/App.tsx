@@ -227,7 +227,7 @@ function App() {
   }, [openAiApiKey]);
 
   const createAntiShadowPrompt = (description: string): string => {
-    return `Apple iOS emoji style of: "${description}". OFFICIAL Apple emoji. Simple shapes. Minimal. Vibrant, uniform colors. Clean white background.`;
+    return `Apple style emoji of: "${description}". Clean white background.`;
   };
 
   const removeBackground = (imageDataUrl: string): Promise<string> => {
