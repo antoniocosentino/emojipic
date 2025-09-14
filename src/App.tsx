@@ -618,8 +618,6 @@ function App() {
         </a>{" "}
         &copy; 2023 - 2025 ·{" "}
         <span className="hidden md:inline-block">&nbsp;</span>
-        All rights reserved ·{" "}
-        <span className="hidden md:inline-block">&nbsp;</span>
         <a
           target="_blank"
           href="https://github.com/antoniocosentino/emojipic"
