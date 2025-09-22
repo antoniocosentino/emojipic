@@ -5,6 +5,17 @@ import useThrottle from "./hooks/useThrottle";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import OpenAI from "openai";
 import { ReactComponent as GuidelinesSVG } from "./guidelines.svg";
+import {
+  trackModeChange,
+  trackEmojiInput,
+  trackRandomizeEmoji,
+  trackColorChange,
+  trackTextareaInput,
+  trackImageSizeChange,
+  trackPasteImage,
+  trackDownload,
+  trackAiGeneration,
+} from "./analytics";
 
 const packageJson = require("./../package.json");
 
@@ -85,6 +96,7 @@ function App() {
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
+  const throttledEmojiDescription = useThrottle(emojiDescription, 1000); // Throttle textarea tracking
 
   const downloadRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +109,16 @@ function App() {
   };
 
   const handleDownloadImage = async () => {
+    // Track download event
+    const hasCustomizations = (
+      (mode === 'ai' && (emojiDescription.trim() !== '' || imageSize !== 100)) ||
+      (mode === 'paste' && imageSize !== 100) ||
+      (mode === 'standard' && emoji !== getRandomEmoji()) ||
+      bgColor !== getRandomColor()
+    );
+    
+    trackDownload(mode, hasCustomizations);
+
     if (mode === "ai" && generatedImageUrl) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -116,7 +138,10 @@ function App() {
       if (mode !== "paste") return;
 
       const items = clipboardEvent.clipboardData?.items;
-      if (!items) return;
+      if (!items) {
+        trackPasteImage(false);
+        return;
+      }
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -128,6 +153,7 @@ function App() {
               const result = e.target?.result;
               if (typeof result === "string") {
                 setPastedImageUrl(result);
+                trackPasteImage(true, item.type);
               }
             };
             reader.readAsDataURL(file);
@@ -145,7 +171,10 @@ function App() {
     if (mode !== "paste") return;
 
     const items = event.clipboardData?.items;
-    if (!items) return;
+    if (!items) {
+      trackPasteImage(false);
+      return;
+    }
 
     event.preventDefault();
 
@@ -159,6 +188,7 @@ function App() {
             const result = e.target?.result;
             if (typeof result === "string") {
               setPastedImageUrl(result);
+              trackPasteImage(true, item.type);
             }
           };
           reader.readAsDataURL(file);
@@ -226,6 +256,17 @@ function App() {
     }
   }, [openAiApiKey]);
 
+  // Track AI description changes (throttled)
+  useEffect(() => {
+    if (mode === 'ai' && throttledEmojiDescription !== undefined) {
+      trackTextareaInput(
+        throttledEmojiDescription.length,
+        throttledEmojiDescription.length > 0,
+        throttledEmojiDescription
+      );
+    }
+  }, [throttledEmojiDescription, mode]);
+
   const createAntiShadowPrompt = (description: string): string => {
     return `Apple style emoji of: "${description}". Clean white background.`;
   };
@@ -292,6 +333,9 @@ function App() {
 
   const generateAiEmoji = async () => {
     setIsGenerating(true);
+    
+    // Track AI generation start
+    trackAiGeneration('start', emojiDescription.length);
 
     try {
       const openai = new OpenAI({
@@ -315,11 +359,19 @@ function App() {
 
         const transparentDataUrl = await removeBackground(dataUrl);
         setGeneratedImageUrl(transparentDataUrl);
+        
+        // Track AI generation success
+        trackAiGeneration('success', emojiDescription.length);
       } else {
         throw new Error("No base64 image received from OpenAI");
       }
     } catch (error) {
       console.error("Error generating AI emoji:", error);
+      
+      // Track AI generation error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      trackAiGeneration('error', emojiDescription.length, errorMessage);
+      
       alert("Error generating emoji. Please check your API key and try again.");
     } finally {
       setIsGenerating(false);
@@ -351,9 +403,11 @@ function App() {
           <div className="relative inline-block w-64">
             <select
               value={mode}
-              onChange={(e) =>
-                setMode(e.target.value as "standard" | "ai" | "paste")
-              }
+              onChange={(e) => {
+                const newMode = e.target.value as "standard" | "ai" | "paste";
+                trackModeChange(newMode, mode);
+                setMode(newMode);
+              }}
               style={{ WebkitAppearance: "none", MozAppearance: "none" }}
               className="appearance-none block w-full bg-gray-200 border-2 border-gray-200 rounded py-2 pl-4 pr-10 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-md font-regular"
               aria-label="Mode"
@@ -415,25 +469,41 @@ function App() {
                   max="100"
                   step="1"
                   value={imageSize}
-                  onChange={(e) => setImageSize(Number(e.target.value))}
+                  onChange={(e) => {
+                    const newSize = Number(e.target.value);
+                    setImageSize(newSize);
+                    trackImageSizeChange(newSize, 'ai', 'change');
+                  }}
                   onMouseDown={
                     generatedImageUrl
-                      ? () => setIsDraggingSlider(true)
+                      ? () => {
+                          setIsDraggingSlider(true);
+                          trackImageSizeChange(imageSize, 'ai', 'start');
+                        }
                       : undefined
                   }
                   onMouseUp={
                     generatedImageUrl
-                      ? () => setIsDraggingSlider(false)
+                      ? () => {
+                          setIsDraggingSlider(false);
+                          trackImageSizeChange(imageSize, 'ai', 'end');
+                        }
                       : undefined
                   }
                   onTouchStart={
                     generatedImageUrl
-                      ? () => setIsDraggingSlider(true)
+                      ? () => {
+                          setIsDraggingSlider(true);
+                          trackImageSizeChange(imageSize, 'ai', 'start');
+                        }
                       : undefined
                   }
                   onTouchEnd={
                     generatedImageUrl
-                      ? () => setIsDraggingSlider(false)
+                      ? () => {
+                          setIsDraggingSlider(false);
+                          trackImageSizeChange(imageSize, 'ai', 'end');
+                        }
                       : undefined
                   }
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
@@ -466,21 +536,37 @@ function App() {
                   max="100"
                   step="1"
                   value={imageSize}
-                  onChange={(e) => setImageSize(Number(e.target.value))}
+                  onChange={(e) => {
+                    const newSize = Number(e.target.value);
+                    setImageSize(newSize);
+                    trackImageSizeChange(newSize, 'paste', 'change');
+                  }}
                   onMouseDown={
-                    pastedImageUrl ? () => setIsDraggingSlider(true) : undefined
+                    pastedImageUrl ? () => {
+                      setIsDraggingSlider(true);
+                      trackImageSizeChange(imageSize, 'paste', 'start');
+                    } : undefined
                   }
                   onMouseUp={
                     pastedImageUrl
-                      ? () => setIsDraggingSlider(false)
+                      ? () => {
+                          setIsDraggingSlider(false);
+                          trackImageSizeChange(imageSize, 'paste', 'end');
+                        }
                       : undefined
                   }
                   onTouchStart={
-                    pastedImageUrl ? () => setIsDraggingSlider(true) : undefined
+                    pastedImageUrl ? () => {
+                      setIsDraggingSlider(true);
+                      trackImageSizeChange(imageSize, 'paste', 'start');
+                    } : undefined
                   }
                   onTouchEnd={
                     pastedImageUrl
-                      ? () => setIsDraggingSlider(false)
+                      ? () => {
+                          setIsDraggingSlider(false);
+                          trackImageSizeChange(imageSize, 'paste', 'end');
+                        }
                       : undefined
                   }
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
@@ -494,7 +580,13 @@ function App() {
                 <input
                   type="text"
                   value={emoji}
-                  onChange={(e) => setEmoji(e.target.value)}
+                  onChange={(e) => {
+                    const newEmoji = e.target.value;
+                    setEmoji(newEmoji);
+                    if (newEmoji.trim()) {
+                      trackEmojiInput(newEmoji, 'typing');
+                    }
+                  }}
                   size={1}
                   maxLength={2}
                   className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl"
@@ -502,7 +594,11 @@ function App() {
 
                 <button
                   className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
-                  onClick={() => setEmoji(getRandomEmoji)}
+                  onClick={() => {
+                    const newEmoji = getRandomEmoji();
+                    setEmoji(newEmoji);
+                    trackRandomizeEmoji(newEmoji);
+                  }}
                 >
                   Randomize emoji
                 </button>
@@ -515,7 +611,11 @@ function App() {
             <input
               type="text"
               value={bgColor}
-              onChange={(e) => setBgColor(e.target.value)}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                setBgColor(newColor);
+                trackColorChange(newColor, 'text_input');
+              }}
               size={1}
               className="bg-gray-200 inline-block appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl align-bottom"
             />
@@ -523,13 +623,21 @@ function App() {
             <input
               type="color"
               value={bgColor}
-              onChange={(e) => setBgColor(e.target.value)}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                setBgColor(newColor);
+                trackColorChange(newColor, 'color_picker');
+              }}
               className="ml-2 h-12 w-12"
             />
 
             <button
               className="font-medium text-blue-600 dark:text-blue-500 hover:underline block"
-              onClick={() => setBgColor(getRandomColor)}
+              onClick={() => {
+                const newColor = getRandomColor();
+                setBgColor(newColor);
+                trackColorChange(newColor, 'random');
+              }}
             >
               Randomize color
             </button>
