@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import "./App.css";
 import { exportComponentAsPNG } from "react-component-export-image";
 import useThrottle from "./hooks/useThrottle";
+import useDebounce from "./hooks/useDebounce";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import OpenAI from "openai";
 import { ReactComponent as GuidelinesSVG } from "./guidelines.svg";
@@ -96,7 +97,7 @@ function App() {
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
-  const throttledEmojiDescription = useThrottle(emojiDescription, 1000);
+  const debouncedEmojiDescription = useDebounce(emojiDescription, 1000);
 
   const downloadRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -256,14 +257,14 @@ function App() {
   }, [openAiApiKey]);
 
   useEffect(() => {
-    if (mode === "ai" && throttledEmojiDescription !== undefined) {
+    if (mode === "ai" && debouncedEmojiDescription !== undefined) {
       trackTextareaInput(
-        throttledEmojiDescription.length,
-        throttledEmojiDescription.length > 0,
-        throttledEmojiDescription
+        debouncedEmojiDescription.length,
+        debouncedEmojiDescription.length > 0,
+        debouncedEmojiDescription
       );
     }
-  }, [throttledEmojiDescription, mode]);
+  }, [debouncedEmojiDescription, mode]);
 
   const createAntiShadowPrompt = (description: string): string => {
     return `Apple style emoji of: "${description}". Clean white background.`;
