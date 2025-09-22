@@ -96,7 +96,7 @@ function App() {
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
-  const throttledEmojiDescription = useThrottle(emojiDescription, 1000); // Throttle textarea tracking
+  const throttledEmojiDescription = useThrottle(emojiDescription, 1000);
 
   const downloadRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -109,14 +109,13 @@ function App() {
   };
 
   const handleDownloadImage = async () => {
-    // Track download event
-    const hasCustomizations = (
-      (mode === 'ai' && (emojiDescription.trim() !== '' || imageSize !== 100)) ||
-      (mode === 'paste' && imageSize !== 100) ||
-      (mode === 'standard' && emoji !== getRandomEmoji()) ||
-      bgColor !== getRandomColor()
-    );
-    
+    const hasCustomizations =
+      (mode === "ai" &&
+        (emojiDescription.trim() !== "" || imageSize !== 100)) ||
+      (mode === "paste" && imageSize !== 100) ||
+      (mode === "standard" && emoji !== getRandomEmoji()) ||
+      bgColor !== getRandomColor();
+
     trackDownload(mode, hasCustomizations);
 
     if (mode === "ai" && generatedImageUrl) {
@@ -256,9 +255,8 @@ function App() {
     }
   }, [openAiApiKey]);
 
-  // Track AI description changes (throttled)
   useEffect(() => {
-    if (mode === 'ai' && throttledEmojiDescription !== undefined) {
+    if (mode === "ai" && throttledEmojiDescription !== undefined) {
       trackTextareaInput(
         throttledEmojiDescription.length,
         throttledEmojiDescription.length > 0,
@@ -333,9 +331,8 @@ function App() {
 
   const generateAiEmoji = async () => {
     setIsGenerating(true);
-    
-    // Track AI generation start
-    trackAiGeneration('start', emojiDescription.length);
+
+    trackAiGeneration("start", emojiDescription.length);
 
     try {
       const openai = new OpenAI({
@@ -359,19 +356,18 @@ function App() {
 
         const transparentDataUrl = await removeBackground(dataUrl);
         setGeneratedImageUrl(transparentDataUrl);
-        
-        // Track AI generation success
-        trackAiGeneration('success', emojiDescription.length);
+
+        trackAiGeneration("success", emojiDescription.length);
       } else {
         throw new Error("No base64 image received from OpenAI");
       }
     } catch (error) {
       console.error("Error generating AI emoji:", error);
-      
-      // Track AI generation error
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      trackAiGeneration('error', emojiDescription.length, errorMessage);
-      
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      trackAiGeneration("error", emojiDescription.length, errorMessage);
+
       alert("Error generating emoji. Please check your API key and try again.");
     } finally {
       setIsGenerating(false);
@@ -472,13 +468,13 @@ function App() {
                   onChange={(e) => {
                     const newSize = Number(e.target.value);
                     setImageSize(newSize);
-                    trackImageSizeChange(newSize, 'ai', 'change');
+                    trackImageSizeChange(newSize, "ai", "change");
                   }}
                   onMouseDown={
                     generatedImageUrl
                       ? () => {
                           setIsDraggingSlider(true);
-                          trackImageSizeChange(imageSize, 'ai', 'start');
+                          trackImageSizeChange(imageSize, "ai", "start");
                         }
                       : undefined
                   }
@@ -486,7 +482,7 @@ function App() {
                     generatedImageUrl
                       ? () => {
                           setIsDraggingSlider(false);
-                          trackImageSizeChange(imageSize, 'ai', 'end');
+                          trackImageSizeChange(imageSize, "ai", "end");
                         }
                       : undefined
                   }
@@ -494,7 +490,7 @@ function App() {
                     generatedImageUrl
                       ? () => {
                           setIsDraggingSlider(true);
-                          trackImageSizeChange(imageSize, 'ai', 'start');
+                          trackImageSizeChange(imageSize, "ai", "start");
                         }
                       : undefined
                   }
@@ -502,7 +498,7 @@ function App() {
                     generatedImageUrl
                       ? () => {
                           setIsDraggingSlider(false);
-                          trackImageSizeChange(imageSize, 'ai', 'end');
+                          trackImageSizeChange(imageSize, "ai", "end");
                         }
                       : undefined
                   }
@@ -539,33 +535,37 @@ function App() {
                   onChange={(e) => {
                     const newSize = Number(e.target.value);
                     setImageSize(newSize);
-                    trackImageSizeChange(newSize, 'paste', 'change');
+                    trackImageSizeChange(newSize, "paste", "change");
                   }}
                   onMouseDown={
-                    pastedImageUrl ? () => {
-                      setIsDraggingSlider(true);
-                      trackImageSizeChange(imageSize, 'paste', 'start');
-                    } : undefined
+                    pastedImageUrl
+                      ? () => {
+                          setIsDraggingSlider(true);
+                          trackImageSizeChange(imageSize, "paste", "start");
+                        }
+                      : undefined
                   }
                   onMouseUp={
                     pastedImageUrl
                       ? () => {
                           setIsDraggingSlider(false);
-                          trackImageSizeChange(imageSize, 'paste', 'end');
+                          trackImageSizeChange(imageSize, "paste", "end");
                         }
                       : undefined
                   }
                   onTouchStart={
-                    pastedImageUrl ? () => {
-                      setIsDraggingSlider(true);
-                      trackImageSizeChange(imageSize, 'paste', 'start');
-                    } : undefined
+                    pastedImageUrl
+                      ? () => {
+                          setIsDraggingSlider(true);
+                          trackImageSizeChange(imageSize, "paste", "start");
+                        }
+                      : undefined
                   }
                   onTouchEnd={
                     pastedImageUrl
                       ? () => {
                           setIsDraggingSlider(false);
-                          trackImageSizeChange(imageSize, 'paste', 'end');
+                          trackImageSizeChange(imageSize, "paste", "end");
                         }
                       : undefined
                   }
@@ -584,7 +584,7 @@ function App() {
                     const newEmoji = e.target.value;
                     setEmoji(newEmoji);
                     if (newEmoji.trim()) {
-                      trackEmojiInput(newEmoji, 'typing');
+                      trackEmojiInput(newEmoji, "typing");
                     }
                   }}
                   size={1}
@@ -614,7 +614,7 @@ function App() {
               onChange={(e) => {
                 const newColor = e.target.value;
                 setBgColor(newColor);
-                trackColorChange(newColor, 'text_input');
+                trackColorChange(newColor, "text_input");
               }}
               size={1}
               className="bg-gray-200 inline-block appearance-none border-2 border-gray-200 rounded w-40 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-sky-500 text-2xl align-bottom"
@@ -626,7 +626,7 @@ function App() {
               onChange={(e) => {
                 const newColor = e.target.value;
                 setBgColor(newColor);
-                trackColorChange(newColor, 'color_picker');
+                trackColorChange(newColor, "color_picker");
               }}
               className="ml-2 h-12 w-12"
             />
@@ -636,7 +636,7 @@ function App() {
               onClick={() => {
                 const newColor = getRandomColor();
                 setBgColor(newColor);
-                trackColorChange(newColor, 'random');
+                trackColorChange(newColor, "random");
               }}
             >
               Randomize color
