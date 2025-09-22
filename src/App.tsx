@@ -734,7 +734,11 @@ function App() {
               <button
                 type="button"
                 onClick={handleDownloadImage}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                disabled={
+                  (mode === "ai" && !generatedImageUrl) ||
+                  (mode === "paste" && !pastedImageUrl)
+                }
+                className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
               >
                 Download PNG
               </button>
