@@ -93,7 +93,11 @@ function App() {
   );
   const [imageSize, setImageSize] = useState(100);
   const [pastedImageUrl, setPastedImageUrl] = useState<string | null>(null);
+  const [originalPastedImageUrl, setOriginalPastedImageUrl] = useState<
+    string | null
+  >(null);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const [removePasteBackground, setRemovePasteBackground] = useState(false);
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
@@ -149,10 +153,14 @@ function App() {
           const file = item.getAsFile();
           if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
               const result = e.target?.result;
               if (typeof result === "string") {
-                setPastedImageUrl(result);
+                setOriginalPastedImageUrl(result);
+                const finalImageUrl = removePasteBackground
+                  ? await removeBackground(result)
+                  : result;
+                setPastedImageUrl(finalImageUrl);
                 trackPasteImage(true, item.type);
               }
             };
@@ -162,7 +170,7 @@ function App() {
         }
       }
     },
-    [mode]
+    [mode, removePasteBackground]
   );
 
   const handleHiddenInputPaste = async (
@@ -184,10 +192,14 @@ function App() {
         const file = item.getAsFile();
         if (file) {
           const reader = new FileReader();
-          reader.onload = (e) => {
+          reader.onload = async (e) => {
             const result = e.target?.result;
             if (typeof result === "string") {
-              setPastedImageUrl(result);
+              setOriginalPastedImageUrl(result);
+              const finalImageUrl = removePasteBackground
+                ? await removeBackground(result)
+                : result;
+              setPastedImageUrl(finalImageUrl);
               trackPasteImage(true, item.type);
             }
           };
@@ -244,6 +256,7 @@ function App() {
   useEffect(() => {
     if (mode !== "paste") {
       setPastedImageUrl(null);
+      setOriginalPastedImageUrl(null);
     }
     if (mode !== "ai") {
       setGeneratedImageUrl(null);
@@ -265,6 +278,25 @@ function App() {
       );
     }
   }, [debouncedEmojiDescription, mode]);
+
+  useEffect(() => {
+    const applyBackgroundRemoval = async () => {
+      if (mode === "paste" && originalPastedImageUrl) {
+        try {
+          if (removePasteBackground) {
+            const processedUrl = await removeBackground(originalPastedImageUrl);
+            setPastedImageUrl(processedUrl);
+          } else {
+            setPastedImageUrl(originalPastedImageUrl);
+          }
+        } catch (error) {
+          console.error("Error removing background:", error);
+        }
+      }
+    };
+
+    applyBackgroundRemoval();
+  }, [removePasteBackground, mode, originalPastedImageUrl]);
 
   const createAntiShadowPrompt = (description: string): string => {
     return `Apple style emoji of: "${description}". Clean white background.`;
@@ -572,6 +604,25 @@ function App() {
                   }
                   className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 />
+
+                <br />
+                <br />
+
+                <label className="font-bold block mb-2">
+                  Background Removal:
+                </label>
+
+                <label className="flex items-center max-w-sm mb-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={removePasteBackground}
+                    onChange={(e) => setRemovePasteBackground(e.target.checked)}
+                    className="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="ml-2 text-md font-medium text-gray-700">
+                    Remove Image Background
+                  </span>
+                </label>
 
                 <br />
               </>
