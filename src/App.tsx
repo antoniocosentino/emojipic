@@ -702,6 +702,10 @@ function App() {
                   style={{
                     backgroundColor: bgColor,
                     zIndex: 1,
+                    display:
+                      (mode === "ai" || mode === "paste") && isDraggingSlider
+                        ? "block"
+                        : "none",
                   }}
                 >
                   <GuidelinesSVG className="lg:w-[600px] lg:h-[600px] w-[200px] h-[200px]" />
