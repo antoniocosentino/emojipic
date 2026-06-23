@@ -22,6 +22,14 @@ const packageJson = require("./../package.json");
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
 
+const getOpenAiErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return "Unknown error";
+};
+
 const getRandomEmoji = (): string => {
   const emojiCodePoint =
     Math.floor(Math.random() * (0x1f64f - 0x1f600 + 1)) + 0x1f600;
@@ -376,11 +384,12 @@ function App() {
       const enhancedPrompt = createAntiShadowPrompt(emojiDescription);
 
       const response = await openai.images.generate({
-        model: "dall-e-3",
+        model: "gpt-image-1",
         prompt: enhancedPrompt,
         n: 1,
         size: "1024x1024",
-        response_format: "b64_json",
+        background: "transparent",
+        output_format: "png",
       });
 
       const b64 = response.data?.[0]?.b64_json;
@@ -397,11 +406,10 @@ function App() {
     } catch (error) {
       console.error("Error generating AI emoji:", error);
 
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = getOpenAiErrorMessage(error);
       trackAiGeneration("error", emojiDescription.length, errorMessage);
 
-      alert("Error generating emoji. Please check your API key and try again.");
+      alert(`Error generating emoji: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
