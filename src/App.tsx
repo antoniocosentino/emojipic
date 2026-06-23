@@ -79,7 +79,7 @@ const getRandomColor = (): string => {
 const getViewport = (): number => {
   return Math.max(
     document.documentElement.clientWidth || 0,
-    window.innerWidth || 0
+    window.innerWidth || 0,
   );
 };
 
@@ -97,7 +97,7 @@ function App() {
   const [emojiDescription, setEmojiDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
-    null
+    null,
   );
   const [imageSize, setImageSize] = useState(100);
   const [pastedImageUrl, setPastedImageUrl] = useState<string | null>(null);
@@ -178,11 +178,11 @@ function App() {
         }
       }
     },
-    [mode, removePasteBackground]
+    [mode, removePasteBackground],
   );
 
   const handleHiddenInputPaste = async (
-    event: React.ClipboardEvent<HTMLInputElement>
+    event: React.ClipboardEvent<HTMLInputElement>,
   ) => {
     if (mode !== "paste") return;
 
@@ -282,7 +282,7 @@ function App() {
       trackTextareaInput(
         debouncedEmojiDescription.length,
         debouncedEmojiDescription.length > 0,
-        debouncedEmojiDescription
+        debouncedEmojiDescription,
       );
     }
   }, [debouncedEmojiDescription, mode]);
@@ -820,7 +820,7 @@ function App() {
         >
           Antonio Cosentino
         </a>{" "}
-        &copy; 2023 - 2025 ·{" "}
+        &copy; 2023 - 2026 ·{" "}
         <span className="hidden md:inline-block">&nbsp;</span>
         <a
           target="_blank"
