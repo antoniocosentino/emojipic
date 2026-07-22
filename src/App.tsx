@@ -22,6 +22,10 @@ const packageJson = require("./../package.json");
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
 
+const isMobileDevice = (): boolean => {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+};
+
 const getOpenAiErrorMessage = (error: unknown): string => {
   if (error instanceof Error && error.message.trim()) {
     return error.message;
@@ -106,6 +110,11 @@ function App() {
   >(null);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [removePasteBackground, setRemovePasteBackground] = useState(false);
+  const [mobileExportImageUrl, setMobileExportImageUrl] = useState<
+    string | null
+  >(null);
+  const [isPreparingMobileExport, setIsPreparingMobileExport] =
+    useState(false);
 
   const throttledScrollAmount = useThrottle(scrollAmount);
   const throttledViewport = useThrottle(viewPort);
@@ -136,6 +145,85 @@ function App() {
     }
     if (mode === "paste" && pastedImageUrl) {
       await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    if (isMobileDevice() && downloadRef.current) {
+      setIsPreparingMobileExport(true);
+
+      try {
+        const preview = downloadRef.current;
+        const content = preview.firstElementChild as HTMLElement | null;
+        if (!content) {
+          throw new Error("No image content available to export");
+        }
+
+        const previewBounds = preview.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(previewBounds.width * scale);
+        canvas.height = Math.round(previewBounds.height * scale);
+        const context = canvas.getContext("2d");
+        if (!context) {
+          throw new Error("Unable to create export canvas");
+        }
+
+        context.fillStyle = bgColor;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (content instanceof HTMLImageElement) {
+          const contentBounds = content.getBoundingClientRect();
+          const imageWidth = Math.round(contentBounds.width * scale);
+          const imageHeight = Math.round(contentBounds.height * scale);
+
+          context.drawImage(
+            content,
+            (canvas.width - imageWidth) / 2,
+            (canvas.height - imageHeight) / 2,
+            imageWidth,
+            imageHeight,
+          );
+        } else {
+          const contentStyles = window.getComputedStyle(content);
+          const fontSize = parseFloat(contentStyles.fontSize) * scale;
+          const emoji = content.textContent ?? "";
+
+          context.font = `${contentStyles.fontStyle} ${contentStyles.fontWeight} ${fontSize}px ${contentStyles.fontFamily}`;
+          context.fillStyle = contentStyles.color;
+          context.textAlign = "center";
+          context.textBaseline = "alphabetic";
+
+          const metrics = context.measureText(emoji);
+          const baseline =
+            canvas.height / 2 +
+            (metrics.actualBoundingBoxAscent -
+              metrics.actualBoundingBoxDescent) /
+              2;
+          context.fillText(emoji, canvas.width / 2, baseline);
+        }
+
+        const imageBlob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Unable to create PNG image"));
+            }
+          }, "image/png");
+        });
+
+        setMobileExportImageUrl((previousImageUrl) => {
+          if (previousImageUrl) {
+            URL.revokeObjectURL(previousImageUrl);
+          }
+          return URL.createObjectURL(imageBlob);
+        });
+        return;
+      } catch (error) {
+        console.error("Unable to prepare image for mobile export", error);
+        return;
+      } finally {
+        setIsPreparingMobileExport(false);
+      }
     }
 
     exportComponentAsPNG(downloadRef, {
@@ -799,12 +887,17 @@ function App() {
                 type="button"
                 onClick={handleDownloadImage}
                 disabled={
+                  isPreparingMobileExport ||
                   (mode === "ai" && !generatedImageUrl) ||
                   (mode === "paste" && !pastedImageUrl)
                 }
                 className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
               >
-                Download PNG
+                {isPreparingMobileExport
+                  ? "Preparing image…"
+                  : isMobileDevice()
+                    ? "Open image"
+                    : "Download PNG"}
               </button>
             </div>
           </div>
@@ -844,6 +937,33 @@ function App() {
         </a>{" "}
         · v.{packageJson.version}
       </div>
+      {mobileExportImageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Your emojipic image"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black p-4"
+        >
+          <div className="mb-4 flex w-full max-w-2xl items-center justify-between text-white">
+            <p className="text-sm">Press and hold the image to save it to Photos.</p>
+            <button
+              type="button"
+              onClick={() => {
+                URL.revokeObjectURL(mobileExportImageUrl);
+                setMobileExportImageUrl(null);
+              }}
+              className="ml-4 rounded border border-white px-3 py-1 font-bold"
+            >
+              Close
+            </button>
+          </div>
+          <img
+            src={mobileExportImageUrl}
+            alt="Your emojipic"
+            className="max-h-[calc(100vh-6rem)] max-w-full object-contain"
+          />
+        </div>
+      )}
     </HelmetProvider>
   );
 }
