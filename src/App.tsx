@@ -446,18 +446,51 @@ function App() {
           .split(",")
           .map(Number);
 
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
+        const isBackgroundColor = (pixelIndex: number): boolean => {
+          const index = pixelIndex * 4;
+          const dr = Math.abs(data[index] - bgColor[0]);
+          const dg = Math.abs(data[index + 1] - bgColor[1]);
+          const db = Math.abs(data[index + 2] - bgColor[2]);
 
-          const dr = Math.abs(r - bgColor[0]);
-          const dg = Math.abs(g - bgColor[1]);
-          const db = Math.abs(b - bgColor[2]);
+          return dr < tolerance && dg < tolerance && db < tolerance;
+        };
 
-          if (dr < tolerance && dg < tolerance && db < tolerance) {
-            data[i + 3] = 0;
+        // Only remove matching pixels that are connected to the image edge.
+        // Matching colours enclosed by the subject (for example, blue dots on
+        // a white ball against a blue background) are deliberately preserved.
+        const pixelCount = canvas.width * canvas.height;
+        const visited = new Uint8Array(pixelCount);
+        const queue = new Uint32Array(pixelCount);
+        let queueStart = 0;
+        let queueEnd = 0;
+
+        const enqueueIfBackground = (pixelIndex: number) => {
+          if (!visited[pixelIndex] && isBackgroundColor(pixelIndex)) {
+            visited[pixelIndex] = 1;
+            queue[queueEnd++] = pixelIndex;
           }
+        };
+
+        for (let x = 0; x < canvas.width; x++) {
+          enqueueIfBackground(x);
+          enqueueIfBackground((canvas.height - 1) * canvas.width + x);
+        }
+        for (let y = 1; y < canvas.height - 1; y++) {
+          enqueueIfBackground(y * canvas.width);
+          enqueueIfBackground(y * canvas.width + canvas.width - 1);
+        }
+
+        while (queueStart < queueEnd) {
+          const pixelIndex = queue[queueStart++];
+          const x = pixelIndex % canvas.width;
+          const y = Math.floor(pixelIndex / canvas.width);
+
+          data[pixelIndex * 4 + 3] = 0;
+
+          if (x > 0) enqueueIfBackground(pixelIndex - 1);
+          if (x < canvas.width - 1) enqueueIfBackground(pixelIndex + 1);
+          if (y > 0) enqueueIfBackground(pixelIndex - canvas.width);
+          if (y < canvas.height - 1) enqueueIfBackground(pixelIndex + canvas.width);
         }
 
         ctx.putImageData(imageData, 0, 0);
