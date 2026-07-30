@@ -110,6 +110,7 @@ function App() {
   >(null);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [removePasteBackground, setRemovePasteBackground] = useState(false);
+  const [backgroundTolerance, setBackgroundTolerance] = useState(30);
   const [mobileExportImageUrl, setMobileExportImageUrl] = useState<
     string | null
   >(null);
@@ -254,7 +255,7 @@ function App() {
               if (typeof result === "string") {
                 setOriginalPastedImageUrl(result);
                 const finalImageUrl = removePasteBackground
-                  ? await removeBackground(result)
+                  ? await removeBackground(result, backgroundTolerance)
                   : result;
                 setPastedImageUrl(finalImageUrl);
                 trackPasteImage(true, item.type);
@@ -266,7 +267,7 @@ function App() {
         }
       }
     },
-    [mode, removePasteBackground],
+    [mode, removePasteBackground, backgroundTolerance],
   );
 
   const handleHiddenInputPaste = async (
@@ -293,7 +294,7 @@ function App() {
             if (typeof result === "string") {
               setOriginalPastedImageUrl(result);
               const finalImageUrl = removePasteBackground
-                ? await removeBackground(result)
+                ? await removeBackground(result, backgroundTolerance)
                 : result;
               setPastedImageUrl(finalImageUrl);
               trackPasteImage(true, item.type);
@@ -380,7 +381,10 @@ function App() {
       if (mode === "paste" && originalPastedImageUrl) {
         try {
           if (removePasteBackground) {
-            const processedUrl = await removeBackground(originalPastedImageUrl);
+            const processedUrl = await removeBackground(
+              originalPastedImageUrl,
+              backgroundTolerance,
+            );
             setPastedImageUrl(processedUrl);
           } else {
             setPastedImageUrl(originalPastedImageUrl);
@@ -392,13 +396,21 @@ function App() {
     };
 
     applyBackgroundRemoval();
-  }, [removePasteBackground, mode, originalPastedImageUrl]);
+  }, [
+    removePasteBackground,
+    mode,
+    originalPastedImageUrl,
+    backgroundTolerance,
+  ]);
 
   const createAntiShadowPrompt = (description: string): string => {
     return `Apple style emoji of: "${description}". Clean white background.`;
   };
 
-  const removeBackground = (imageDataUrl: string): Promise<string> => {
+  const removeBackground = (
+    imageDataUrl: string,
+    tolerance: number = backgroundTolerance,
+  ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -434,7 +446,6 @@ function App() {
           .split(",")
           .map(Number);
 
-        const tolerance = 30;
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
@@ -484,7 +495,10 @@ function App() {
       if (b64) {
         const dataUrl = `data:image/png;base64,${b64}`;
 
-        const transparentDataUrl = await removeBackground(dataUrl);
+        const transparentDataUrl = await removeBackground(
+          dataUrl,
+          backgroundTolerance,
+        );
         setGeneratedImageUrl(transparentDataUrl);
 
         trackAiGeneration("success", emojiDescription.length);
@@ -719,6 +733,29 @@ function App() {
                     Remove Image Background
                   </span>
                 </label>
+
+                {removePasteBackground && (
+                  <>
+                    <label
+                      htmlFor="background-tolerance-range"
+                      className="font-bold block mb-2"
+                    >
+                      Background Tolerance: {backgroundTolerance}
+                    </label>
+                    <input
+                      id="background-tolerance-range"
+                      type="range"
+                      min="0"
+                      max="255"
+                      step="1"
+                      value={backgroundTolerance}
+                      onChange={(e) =>
+                        setBackgroundTolerance(Number(e.target.value))
+                      }
+                      className="w-full max-w-sm h-2 mb-4 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    />
+                  </>
+                )}
 
                 <br />
               </>
