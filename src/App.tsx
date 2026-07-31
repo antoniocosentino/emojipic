@@ -22,6 +22,8 @@ const packageJson = require("./../package.json");
 
 const TRACKING_ID = process.env.REACT_APP_GA_ID;
 
+type BackgroundRemovalStrategy = "global-color-match" | "edge-connected";
+
 const isMobileDevice = (): boolean => {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 };
@@ -111,6 +113,8 @@ function App() {
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const [removePasteBackground, setRemovePasteBackground] = useState(false);
   const [backgroundTolerance, setBackgroundTolerance] = useState(30);
+  const [backgroundRemovalStrategy, setBackgroundRemovalStrategy] =
+    useState<BackgroundRemovalStrategy>("global-color-match");
   const [mobileExportImageUrl, setMobileExportImageUrl] = useState<
     string | null
   >(null);
@@ -255,7 +259,11 @@ function App() {
               if (typeof result === "string") {
                 setOriginalPastedImageUrl(result);
                 const finalImageUrl = removePasteBackground
-                  ? await removeBackground(result, backgroundTolerance)
+                  ? await removeBackground(
+                      result,
+                      backgroundTolerance,
+                      backgroundRemovalStrategy,
+                    )
                   : result;
                 setPastedImageUrl(finalImageUrl);
                 trackPasteImage(true, item.type);
@@ -267,7 +275,7 @@ function App() {
         }
       }
     },
-    [mode, removePasteBackground, backgroundTolerance],
+    [mode, removePasteBackground, backgroundTolerance, backgroundRemovalStrategy],
   );
 
   const handleHiddenInputPaste = async (
@@ -294,7 +302,11 @@ function App() {
             if (typeof result === "string") {
               setOriginalPastedImageUrl(result);
               const finalImageUrl = removePasteBackground
-                ? await removeBackground(result, backgroundTolerance)
+                ? await removeBackground(
+                    result,
+                    backgroundTolerance,
+                    backgroundRemovalStrategy,
+                  )
                 : result;
               setPastedImageUrl(finalImageUrl);
               trackPasteImage(true, item.type);
@@ -384,6 +396,7 @@ function App() {
             const processedUrl = await removeBackground(
               originalPastedImageUrl,
               backgroundTolerance,
+              backgroundRemovalStrategy,
             );
             setPastedImageUrl(processedUrl);
           } else {
@@ -401,6 +414,7 @@ function App() {
     mode,
     originalPastedImageUrl,
     backgroundTolerance,
+    backgroundRemovalStrategy,
   ]);
 
   const createAntiShadowPrompt = (description: string): string => {
@@ -410,6 +424,7 @@ function App() {
   const removeBackground = (
     imageDataUrl: string,
     tolerance: number = backgroundTolerance,
+    strategy: BackgroundRemovalStrategy = backgroundRemovalStrategy,
   ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -455,42 +470,51 @@ function App() {
           return dr < tolerance && dg < tolerance && db < tolerance;
         };
 
-        // Only remove matching pixels that are connected to the image edge.
-        // Matching colours enclosed by the subject (for example, blue dots on
-        // a white ball against a blue background) are deliberately preserved.
-        const pixelCount = canvas.width * canvas.height;
-        const visited = new Uint8Array(pixelCount);
-        const queue = new Uint32Array(pixelCount);
-        let queueStart = 0;
-        let queueEnd = 0;
-
-        const enqueueIfBackground = (pixelIndex: number) => {
-          if (!visited[pixelIndex] && isBackgroundColor(pixelIndex)) {
-            visited[pixelIndex] = 1;
-            queue[queueEnd++] = pixelIndex;
+        if (strategy === "global-color-match") {
+          for (let pixelIndex = 0; pixelIndex < canvas.width * canvas.height; pixelIndex++) {
+            if (isBackgroundColor(pixelIndex)) {
+              data[pixelIndex * 4 + 3] = 0;
+            }
           }
-        };
+        } else {
+          // Only remove matching pixels that are connected to the image edge.
+          // Matching colours enclosed by the subject are deliberately preserved.
+          const pixelCount = canvas.width * canvas.height;
+          const visited = new Uint8Array(pixelCount);
+          const queue = new Uint32Array(pixelCount);
+          let queueStart = 0;
+          let queueEnd = 0;
 
-        for (let x = 0; x < canvas.width; x++) {
-          enqueueIfBackground(x);
-          enqueueIfBackground((canvas.height - 1) * canvas.width + x);
-        }
-        for (let y = 1; y < canvas.height - 1; y++) {
-          enqueueIfBackground(y * canvas.width);
-          enqueueIfBackground(y * canvas.width + canvas.width - 1);
-        }
+          const enqueueIfBackground = (pixelIndex: number) => {
+            if (!visited[pixelIndex] && isBackgroundColor(pixelIndex)) {
+              visited[pixelIndex] = 1;
+              queue[queueEnd++] = pixelIndex;
+            }
+          };
 
-        while (queueStart < queueEnd) {
-          const pixelIndex = queue[queueStart++];
-          const x = pixelIndex % canvas.width;
-          const y = Math.floor(pixelIndex / canvas.width);
+          for (let x = 0; x < canvas.width; x++) {
+            enqueueIfBackground(x);
+            enqueueIfBackground((canvas.height - 1) * canvas.width + x);
+          }
+          for (let y = 1; y < canvas.height - 1; y++) {
+            enqueueIfBackground(y * canvas.width);
+            enqueueIfBackground(y * canvas.width + canvas.width - 1);
+          }
 
-          data[pixelIndex * 4 + 3] = 0;
+          while (queueStart < queueEnd) {
+            const pixelIndex = queue[queueStart++];
+            const x = pixelIndex % canvas.width;
+            const y = Math.floor(pixelIndex / canvas.width);
 
-          if (x > 0) enqueueIfBackground(pixelIndex - 1);
-          if (x < canvas.width - 1) enqueueIfBackground(pixelIndex + 1);
-          if (y > 0) enqueueIfBackground(pixelIndex - canvas.width);
-          if (y < canvas.height - 1) enqueueIfBackground(pixelIndex + canvas.width);
+            data[pixelIndex * 4 + 3] = 0;
+
+            if (x > 0) enqueueIfBackground(pixelIndex - 1);
+            if (x < canvas.width - 1) enqueueIfBackground(pixelIndex + 1);
+            if (y > 0) enqueueIfBackground(pixelIndex - canvas.width);
+            if (y < canvas.height - 1) {
+              enqueueIfBackground(pixelIndex + canvas.width);
+            }
+          }
         }
 
         ctx.putImageData(imageData, 0, 0);
@@ -531,6 +555,7 @@ function App() {
         const transparentDataUrl = await removeBackground(
           dataUrl,
           backgroundTolerance,
+          backgroundRemovalStrategy,
         );
         setGeneratedImageUrl(transparentDataUrl);
 
@@ -769,6 +794,45 @@ function App() {
 
                 {removePasteBackground && (
                   <>
+                    <fieldset className="max-w-sm mb-4">
+                      <legend className="font-bold mb-2">
+                        Background Removal Strategy:
+                      </legend>
+                      <label className="flex items-center mb-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="background-removal-strategy"
+                          value="global-color-match"
+                          checked={
+                            backgroundRemovalStrategy === "global-color-match"
+                          }
+                          onChange={() =>
+                            setBackgroundRemovalStrategy("global-color-match")
+                          }
+                          className="w-4 h-4 bg-gray-100 border-gray-300 focus:outline-none focus:ring-0"
+                        />
+                        <span className="ml-2 text-md font-medium text-gray-700">
+                          Global color match
+                        </span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="background-removal-strategy"
+                          value="edge-connected"
+                          checked={
+                            backgroundRemovalStrategy === "edge-connected"
+                          }
+                          onChange={() =>
+                            setBackgroundRemovalStrategy("edge-connected")
+                          }
+                          className="w-4 h-4 bg-gray-100 border-gray-300 focus:outline-none focus:ring-0"
+                        />
+                        <span className="ml-2 text-md font-medium text-gray-700">
+                          Edge connected
+                        </span>
+                      </label>
+                    </fieldset>
                     <label
                       htmlFor="background-tolerance-range"
                       className="font-bold block mb-2"
